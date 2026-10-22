@@ -8,7 +8,7 @@ set -e
 here="${0:A:h}"
 dir="$here/build.noindex"
 out="$dir/Focus MN.app"
-version="1.0"
+version="1.1"
 
 rm -rf "$out"
 mkdir -p "$out/Contents/MacOS" "$out/Contents/Resources"
