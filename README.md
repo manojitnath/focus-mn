@@ -2,6 +2,8 @@
 
 A small floating study radio for macOS: a focus timer with Pomodoro, lofi live streams from YouTube, a study log, and a few retro skins. It sits above your other windows, and most controls also live in the menu bar.
 
+**[Download Focus MN for macOS](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip)** (macOS 13 or later, see [Install](#install))
+
 <p>
   <img src="docs/screenshots/walnut.png" width="32%" alt="Walnut radio skin showing a running focus timer">
   <img src="docs/screenshots/gameboy.png" width="32%" alt="FOCUS MN Pocket skin, styled like a handheld console">
@@ -20,7 +22,7 @@ A small floating study radio for macOS: a focus timer with Pomodoro, lofi live s
 
 Needs macOS 13 or later.
 
-1. Download `Focus-MN.zip` from the [Releases](../../releases) page and unzip it.
+1. [Download `Focus-MN.zip`](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip) (or pick a version on the [Releases](../../releases) page) and unzip it.
 2. Move `Focus MN.app` to your Applications folder.
 3. The app isn't notarized by Apple, so the first time, right-click it and choose **Open**, then **Open** again. If macOS still refuses, run this once:
 
