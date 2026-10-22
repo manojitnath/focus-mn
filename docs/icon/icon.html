@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- App icon designs, drawn as SVG on the macOS icon grid (824/1024 body, centred).
+     icon.html?v=1&size=1024 renders one icon alone (used to make the .icns); no params shows the comparison sheet. -->
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&display=swap">
+<style>
+:root{color-scheme:light}
+body{margin:0;background:#e9e7e2;font-family:'JetBrains Mono',monospace}
+body.one{background:transparent}
+.sheet{display:grid;grid-template-columns:repeat(4,auto);gap:36px 48px;padding:40px;justify-content:start}
+.col{display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.col h2{margin:0;font:800 17px 'JetBrains Mono',monospace;color:#333}
+.small{display:flex;gap:16px;align-items:flex-end;padding:12px;border-radius:12px}
+.small.light{background:#f6f5f2}.small.dark{background:#1e1e22}
+svg{display:block;flex:none}
+</style>
+<body>
+<script>
+// Each design is SVG content for a 100 x 100 tile; the tile shape and shadow are shared.
+const tile = (fill, inner) => `<rect x="0" y="0" width="100" height="100" rx="22.5" fill="${fill}"/>${inner}`;
+const designs = {
+  // 1: a focus timer ring, three quarters done
+  1: tile('url(#g1)', `
+    <circle cx="50" cy="50" r="27" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width="11"/>
+    <circle cx="50" cy="50" r="27" fill="none" stroke="url(#amber)" stroke-width="11" stroke-linecap="round"
+      stroke-dasharray="127 170" transform="rotate(-90 50 50)"/>
+    <circle cx="50" cy="50" r="7" fill="#ffb547"/>`),
+  // 2: a clock face with the remaining time as a wedge
+  2: tile('url(#g2)', `
+    <circle cx="50" cy="50" r="30" fill="none" stroke="#fff" stroke-width="6"/>
+    <path d="M50 50 L50 26 A24 24 0 0 1 70.8 62 Z" fill="#fff"/>
+    <circle cx="50" cy="50" r="3.2" fill="#fff"/>`),
+  // 3: a radio signal, for the lofi stations
+  3: tile('url(#g3)', `
+    <circle cx="50" cy="50" r="8" fill="#fff"/>
+    ${[17, 29].map(r => { const d = (r * .7071).toFixed(2);
+      return `<path d="M${50 + +d} ${50 - d} A${r} ${r} 0 0 1 ${50 + +d} ${50 + +d}" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/>
+              <path d="M${50 - d} ${50 - d} A${r} ${r} 0 0 0 ${50 - d} ${50 + +d}" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/>`; }).join('')}`),
+  // 4: the MN monogram on an amber button
+  4: tile('url(#g4)', `
+    <circle cx="50" cy="50" r="32" fill="url(#amber2)"/>
+    <text x="50" y="50" dy=".36em" text-anchor="middle" font-family="JetBrains Mono" font-weight="800" font-size="24" letter-spacing="-1" fill="#fff">MN</text>`),
+};
+const defs = `<defs>
+  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2340"/><stop offset="1" stop-color="#15111d"/></linearGradient>
+  <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#f2545b"/></linearGradient>
+  <linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a5c"/><stop offset="1" stop-color="#1b1430"/></linearGradient>
+  <linearGradient id="g4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8e5df"/></linearGradient>
+  <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc861"/><stop offset="1" stop-color="#ff7a3d"/></linearGradient>
+  <linearGradient id="amber2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff7a3d"/></linearGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.4" flood-opacity=".3"/></filter>
+</defs>`;
+// 1024 canvas with the 824 body at 100,100: in tile units the canvas is -12.14 .. 112.14
+let uid = 0;
+const icon = (v, px) => {
+  const n = ++uid, d = defs.replace(/id="(\w+)"/g, `id="$1_${n}"`), body = designs[v].replace(/url\(#(\w+)\)/g, `url(#$1_${n})`);
+  return `<svg width="${px}" height="${px}" viewBox="-12.14 -12.14 124.28 124.28">${d}<g filter="url(#sh_${n})">${body}</g></svg>`;
+};
+const q = new URLSearchParams(location.search);
+if (q.has('v')) { document.body.className = 'one'; document.body.innerHTML = icon(q.get('v'), +(q.get('size') || 1024)); }
+else document.body.innerHTML = `<div class="sheet">${[[1, '1 · Focus ring'], [2, '2 · Timer wedge'], [3, '3 · Radio signal'], [4, '4 · MN button']].map(([v, name]) =>
+  `<div class="col"><h2>${name}</h2>${icon(v, 260)}
+   <div class="small light">${icon(v, 96)}${icon(v, 48)}${icon(v, 32)}${icon(v, 16)}</div>
+   <div class="small dark">${icon(v, 96)}${icon(v, 48)}${icon(v, 32)}${icon(v, 16)}</div></div>`).join('')}</div>`;
+</script>
+</body>

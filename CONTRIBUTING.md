@@ -6,7 +6,8 @@
 |---|---|
 | `src/widget.html` | The whole widget: markup, styles and script in one file. Also runs in a browser (data then lives in localStorage). |
 | `src/main.swift` | The native wrapper: floating window, menu bar menu, file storage, YouTube stream lookup, notifications, log window. |
-| `build.sh` | Builds `build/Focus MN.app` (`--zip` also makes the release zip). Run it after any change. |
+| `src/AppIcon.icns` | The app icon, made by `docs/icon/make-icns.sh` from `docs/icon/icon.html` (design 2, Timer wedge). |
+| `build.sh` | Builds `build.noindex/Focus MN.app`. `--install` copies it to `/Applications`; `--zip` makes the release zip. Run it after any change. |
 | `docs/screenshots/` | README images, rendered from `widget.html?skin=…&demo`. |
 | `docs/mockups/` | Design mockups. |
 

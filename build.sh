@@ -1,16 +1,19 @@
 #!/bin/zsh
-# Builds build/Focus MN.app from src/. Re-run after editing widget.html or main.swift.
-#   ./build.sh          build the app
-#   ./build.sh --zip    also make build/Focus-MN.zip for a GitHub release
+# Builds "Focus MN.app" from src/ into build.noindex/ (Spotlight skips folders ending in .noindex,
+# so only the installed copy shows up in search). Re-run after editing anything in src/.
+#   ./build.sh            build the app
+#   ./build.sh --install  also copy it to /Applications and open it
+#   ./build.sh --zip      also make build.noindex/Focus-MN.zip for a GitHub release
 set -e
 here="${0:A:h}"
-out="$here/build/Focus MN.app"
+dir="$here/build.noindex"
+out="$dir/Focus MN.app"
 version="1.0"
 
 rm -rf "$out"
 mkdir -p "$out/Contents/MacOS" "$out/Contents/Resources"
 swiftc -O -swift-version 5 "$here/src/main.swift" -o "$out/Contents/MacOS/Focus MN"
-cp "$here/src/widget.html" "$out/Contents/Resources/"
+cp "$here/src/widget.html" "$here/src/AppIcon.icns" "$out/Contents/Resources/"
 
 cat > "$out/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -21,6 +24,7 @@ cat > "$out/Contents/Info.plist" <<PLIST
   <key>CFBundleDisplayName</key><string>Focus MN</string>
   <key>CFBundleIdentifier</key><string>local.focusmn.app</string>
   <key>CFBundleExecutable</key><string>Focus MN</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$version</string>
   <key>CFBundleVersion</key><string>$version</string>
@@ -35,8 +39,17 @@ PLIST
 codesign --force --deep -s - "$out"
 echo "Built: $out"
 
-if [[ "$1" == "--zip" ]]; then
-  rm -f "$here/build/Focus-MN.zip"
-  ditto -c -k --keepParent "$out" "$here/build/Focus-MN.zip"
-  echo "Zipped: $here/build/Focus-MN.zip"
+if (( ${@[(Ie)--zip]} )); then
+  rm -f "$dir/Focus-MN.zip"
+  ditto -c -k --keepParent "$out" "$dir/Focus-MN.zip"
+  echo "Zipped: $dir/Focus-MN.zip"
+fi
+
+if (( ${@[(Ie)--install]} )); then
+  osascript -e 'tell application id "local.focusmn.app" to quit' 2>/dev/null || true
+  while pgrep -xq "Focus MN"; do sleep 0.2; done
+  rm -rf "/Applications/Focus MN.app"
+  ditto "$out" "/Applications/Focus MN.app"
+  open "/Applications/Focus MN.app"
+  echo "Installed: /Applications/Focus MN.app"
 fi

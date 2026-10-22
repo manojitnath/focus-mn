@@ -39,11 +39,10 @@ Needs the Xcode Command Line Tools (`xcode-select --install`).
 ```bash
 git clone <this repo's URL>
 cd focus-mn
-./build.sh
-open "build/Focus MN.app"
+./build.sh --install
 ```
 
-`./build.sh --zip` also makes `build/Focus-MN.zip` for a release. An app you build yourself doesn't get the warning above.
+This builds the app and copies it to `/Applications`. Without `--install` the app stays in `build.noindex/`, a folder Spotlight doesn't search, so you never see two copies. `./build.sh --zip` also makes `build.noindex/Focus-MN.zip` for a release. An app you build yourself doesn't get the warning above.
 
 ## Where your data lives
 
