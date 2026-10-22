@@ -288,6 +288,12 @@ body.logs-window{background:var(--night)}
 body.logs-window .room{display:none}
 body.native.logs-window .logs{background:var(--night);padding:0}
 body.native.logs-window .logs-sheet{width:100%;border:0;border-radius:0;padding-top:20px}
+/* The topic question's own window: just the card, a bit larger, on a clear background. */
+body.topic-window{background:transparent}
+body.topic-window .room{visibility:hidden}
+body.topic-window .sheet{visibility:visible;position:fixed;background:none;backdrop-filter:none;place-items:center;padding:24px;overflow:visible}
+body.topic-window .card{width:100%;font-size:15px;padding:22px;gap:14px}
+body.topic-window .card h2{font-size:1.35em}
 
 /* ---------- FOCUS MN Classic (compact Mac) ---------- */
 body.model-mac .radio,body.model-mac .desk{display:none}
@@ -631,6 +637,8 @@ if (NATIVE) document.body.classList.add('native');
 // The app opens the log in its own window: the same page, showing only the log, and never writing timer state.
 const LOGS_WINDOW = !!window.__LOGS_WINDOW;
 if (LOGS_WINDOW) document.body.classList.add('logs-window');
+const TOPIC_WINDOW = !!window.__TOPIC_WINDOW;
+if (TOPIC_WINDOW) document.body.classList.add('topic-window');
 // The app sends updated logs when the other window changes them.
 window.__syncLogs = data => { logs = Array.isArray(data) ? data : []; if (!$('#logs').hidden) renderLogs(); };
 const store = {
@@ -655,7 +663,7 @@ function radioHeightFor(w) {
 // Several things ask for a fit at startup; they collapse into one resize on the next frame.
 let fitQueued = false, fitWidth;
 function fitWindow(w) {
-  if (!NATIVE || LOGS_WINDOW) return;
+  if (!NATIVE || LOGS_WINDOW || TOPIC_WINDOW) return;
   fitWidth = w || fitWidth;
   if (fitQueued) return;
   fitQueued = true;
@@ -671,7 +679,7 @@ function doFit(w) {
 // Tell the app where the controls are, so a press anywhere else drags the widget.
 let hitQueued = false;
 function reportHitAreas() {
-  if (!NATIVE || LOGS_WINDOW || hitQueued) return;
+  if (!NATIVE || LOGS_WINDOW || TOPIC_WINDOW || hitQueued) return;
   hitQueued = true;
   requestAnimationFrame(() => {
     hitQueued = false;
@@ -707,7 +715,7 @@ let radioOn = false, pending = null, restored = false;
 if (S.status === 'running') { S.acc += Math.max(0, (S.lastSeen || S.segStart) - S.segStart); S.status = 'paused'; restored = true; }
 if (S.status === 'break' && Date.now() >= S.breakEnds) S.status = 'idle';
 
-function saveState() { if (LOGS_WINDOW) return; S.lastSeen = Date.now(); store.set('studyradio.state', S); }
+function saveState() { if (LOGS_WINDOW || TOPIC_WINDOW) return; S.lastSeen = Date.now(); store.set('studyradio.state', S); }
 function saveLogs() { store.set('studyradio.logs', logs); }
 function elapsed() { return S.acc + (S.status === 'running' ? Date.now() - S.segStart : 0); }
 
@@ -878,13 +886,17 @@ function recentTopics(n = 6) {
   for (let i = logs.length - 1; i >= 0 && seen.length < n; i--) if (!seen.includes(logs[i].topic)) seen.push(logs[i].topic);
   return seen;
 }
+// "12m 30s of focus, 8:31 to 8:45 PM", naming paused time so the clock times add up.
+function sessionLine(p) {
+  const s = Math.round(p.ms / 1000), m = Math.floor(s / 60);
+  const focus = m >= 60 ? dur(p.ms) : m >= 10 || !(s % 60) ? `${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`;
+  const paused = p.end - p.start - p.ms;
+  return `${focus} of focus${paused >= 60e3 ? `, ${dur(paused)} paused` : ''}, ${fmtTime(p.start)} to ${fmtTime(p.end)}`;
+}
 function openSheet() {
-  $('#sheetDur').textContent = `${dur(pending.ms)} of focus, ${fmtTime(pending.start)} to ${fmtTime(pending.end)}`;
-  // In the app the question opens in its own window, which answers through saveSession() or discardSession().
-  if (NATIVE && !LOGS_WINDOW) {
-    native({type: 'askTopic', dur: $('#sheetDur').textContent, recent: recentTopics(4), all: [...new Set(logs.map(l => l.topic))].sort((x, y) => x.localeCompare(y))});
-    return;
-  }
+  $('#sheetDur').textContent = sessionLine(pending);
+  // In the app the question pops out into its own window over the widget; it answers through saveSession() or discardSession().
+  if (NATIVE && !LOGS_WINDOW && !TOPIC_WINDOW) { native({type: 'askTopic', pending}); return; }
   const topics = recentTopics();
   $('#chips').innerHTML = '';
   topics.forEach(t => {
@@ -896,6 +908,7 @@ function openSheet() {
   $('#topicInput').value = '';
   $('#sheet').hidden = false;
   setTimeout(() => $('#topicInput').focus(), 60);
+  if (TOPIC_WINDOW) native({type: 'topicSize', h: Math.ceil($('#sheetForm').getBoundingClientRect().height) + 48});
 }
 function saveSession(topic) {
   if (!pending) return;
@@ -911,9 +924,9 @@ $('#sheetForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('#topicInput'), topic = input.value.trim();
   if (!topic) { input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake'); input.focus(); return; }
-  saveSession(topic);
+  if (TOPIC_WINDOW) native({type: 'topicDone', topic}); else saveSession(topic);
 });
-$('#discardBtn').onclick = discardSession;
+$('#discardBtn').onclick = () => TOPIC_WINDOW ? native({type: 'topicDone', discard: true}) : discardSession();
 
 /* ---------- radio ---------- */
 const audio = new Audio();
@@ -1314,7 +1327,8 @@ $('#skinSel').onchange = e => setSkin(e.target.value);
 
 /* ---------- boot ---------- */
 const params = new URLSearchParams(location.search);
-if (LOGS_WINDOW) { $('#logs').hidden = false; renderLogs(); } else {
+if (LOGS_WINDOW) { $('#logs').hidden = false; renderLogs(); }
+else if (TOPIC_WINDOW) { pending = window.__TOPIC; document.fonts.ready.then(openSheet); } else {
 setSkin(params.get('skin') || S.skin || 'walnut');
 // ?size=sm or ?size=xs previews the desktop widget's smaller layouts in a browser.
 if (['sm', 'xs'].includes(params.get('size'))) document.body.classList.add('native', 'size-' + params.get('size'));
