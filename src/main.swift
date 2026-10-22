@@ -166,12 +166,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             logsWindow?.orderOut(nil)
         case "resize":
             if let w = body["w"] as? Double, let h = body["h"] as? Double,
-               w.isFinite, h.isFinite, w >= 200, h >= 120, w <= 3000, h <= 3000 {
+               w.isFinite, h.isFinite, w >= 120, h >= 120, w <= 3000, h <= 3000 {
                 let lock = body["lock"] as? Bool ?? false
                 // The radio keeps its shape when you drag a corner; the log window resizes freely.
                 if lock {
                     window.contentAspectRatio = NSSize(width: w, height: h)
-                    window.minSize = NSSize(width: 220, height: 220 * h / w)
+                    // XXS windows are narrower than the usual 220 minimum.
+                    window.minSize = NSSize(width: min(220, w), height: min(220, w) * h / w)
                     window.maxSize = NSSize(width: 600, height: 600 * h / w)
                 } else {
                     window.resizeIncrements = NSSize(width: 1, height: 1)
@@ -455,7 +456,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         timerItem.submenu = timer
         menu.addItem(timerItem)
         let sizes = NSMenu()
-        for (title, width) in [("XS", 240), ("Small", 340), ("Medium", 460)] {
+        for (title, width) in [("XXS", 150), ("XS", 240), ("Small", 340), ("Medium", 460)] {
             let item = NSMenuItem(title: title, action: #selector(setSize(_:)), keyEquivalent: "")
             item.tag = width
             item.target = self
@@ -467,7 +468,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let skins = NSMenu()
         for (id, title) in [("walnut", "Walnut"), ("mint", "Mint"), ("midnight", "Midnight"), ("cherry", "Cherry"),
                             ("gameboy", "FOCUS MN Pocket"), ("gameboy-dark", "FOCUS MN Pocket Dark"),
-                            ("classic", "FOCUS MN Classic"), ("classic-dark", "FOCUS MN Classic Dark")] {
+                            ("classic", "FOCUS MN Classic"), ("classic-dark", "FOCUS MN Classic Dark"),
+                            ("recorder", "FOCUS MN Recorder")] {
             let item = NSMenuItem(title: title, action: #selector(setSkin(_:)), keyEquivalent: "")
             item.representedObject = id
             item.target = self

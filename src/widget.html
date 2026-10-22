@@ -6,7 +6,7 @@
 <title>Focus MN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Righteous&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@300;500;700&family=Righteous&family=VT323&display=swap">
 <style>
 /* Night study room: a walnut radio on a desk; the log opens as a sheet over the room */
 :root{
@@ -369,6 +369,88 @@ body.dark.model-mac .mac-tabs button{background:linear-gradient(180deg,#3c3b37,#
 body.dark.model-mac .mac-port{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(0,0,0,.3)}
 body.dark.model-mac .mac-port::after{border-color:#6b6862}
 
+/* ---------- FOCUS MN Classic at XXS: the tall compact Mac ---------- */
+body.native.model-mac.size-xxs{--span:10.4}
+.mac-mini{display:none}
+body.size-xxs .macm{width:9.4em;height:15.2em;margin:.5em auto 1.4em}
+body.size-xxs .mac-upper,body.size-xxs .mac-base,body.size-xxs .mac-st{display:none}
+body.size-xxs .mac-mini{display:block;position:absolute;inset:0;border-radius:.55em;background:linear-gradient(160deg,#f1ede4,#e7e2d7 55%,#ddd7ca);
+  box-shadow:0 1.3em 1.8em -.5em rgba(0,0,0,.28),0 .25em .4em rgba(0,0,0,.14),inset .1em .1em 0 #faf8f3,inset -.08em 0 .12em rgba(0,0,0,.06)}
+.mm-bez{box-sizing:border-box;position:absolute;left:1.15em;right:1.15em;top:1.1em;height:7.3em;border-radius:.85em;padding:.55em;
+  background:linear-gradient(#cfc8ba,#eae5da 45%,#f6f2ea);box-shadow:inset 0 .18em .3em rgba(0,0,0,.25),inset 0 -.06em 0 #fffdf8,0 .05em 0 rgba(255,255,255,.7)}
+.mm-scr{height:100%;border-radius:.4em;background:#0e0f10}
+.mm-seam{position:absolute;left:0;right:0;top:9.35em;height:.07em;background:rgba(0,0,0,.12);box-shadow:0 .05em 0 rgba(255,255,255,.7)}
+.mm-slot{position:absolute;right:1.1em;top:9.05em;width:3.5em;height:.36em;border-radius:.06em;background:#151515;box-shadow:inset 0 .08em .1em rgba(0,0,0,.9),0 .04em 0 rgba(255,255,255,.6)}
+.mm-ledge{position:absolute;left:0;right:0;top:9.55em;height:2.75em;border-radius:.2em .2em .3em .3em;background:linear-gradient(#f3efe6,#e6e1d5);box-shadow:inset 0 .07em 0 #fffdf8,0 .14em .18em rgba(0,0,0,.18)}
+.mm-badge{position:absolute;left:.95em;top:.75em;width:.95em;height:.95em;border:0;padding:0;border-radius:.2em;cursor:pointer;
+  background:linear-gradient(#ffd23a 0 33%,#e8382f 33% 66%,#2f63d6 66%);box-shadow:0 0 0 .07em #2a3a6a,0 .06em .1em rgba(0,0,0,.3);filter:saturate(.3) brightness(1.05);transition:filter .3s}
+.mm-badge[aria-pressed="true"]{filter:none}
+.mm-base{position:absolute;left:.12em;right:.12em;top:12.4em;bottom:0;border-radius:0 0 .5em .5em;background:linear-gradient(#e0dbcf,#d8d2c4);box-shadow:inset 0 .12em .2em rgba(0,0,0,.12)}
+body.size-xxs.model-mac .stage .lcd{border-radius:.4em;gap:.1em}
+body.size-xxs.model-mac .stage .lcd .msg{font-size:.62em;letter-spacing:.06em}
+body.size-xxs.model-mac .stage .lcd .count .digits{font-size:1.55em}
+body.size-xxs.model-mac .stage .lcd .count .digits[data-len="8"]{font-size:1.08em}
+body.dark.size-xxs .mac-mini{background:linear-gradient(160deg,#4b4845,#3e3b39 55%,#33312f);box-shadow:0 1.3em 1.8em -.5em rgba(0,0,0,.4),0 .25em .4em rgba(0,0,0,.2),inset .1em .1em 0 #5c5956}
+body.dark .mm-bez{background:linear-gradient(#262422,#33312f 45%,#3d3a37);box-shadow:inset 0 .18em .3em rgba(0,0,0,.5),0 .05em 0 rgba(255,255,255,.08)}
+body.dark .mm-ledge{background:linear-gradient(#4a4744,#3d3a38);box-shadow:inset 0 .07em 0 #5a5754,0 .14em .18em rgba(0,0,0,.3)}
+body.dark .mm-base{background:linear-gradient(#363432,#2f2d2b)}
+body.dark .mm-seam{box-shadow:0 .05em 0 rgba(255,255,255,.08)}
+
+/* ---------- FOCUS MN Recorder: a white pocket recorder. The screen floats over #recScreen; the waveform is session progress. ---------- */
+body.model-rec .radio,body.model-rec .desk{display:none}
+body.native.model-rec{--span:16}
+.recm{position:relative;width:15em;height:20.6em;margin:.6em auto 1.7em;border-radius:1.8em;font-family:'JetBrains Mono', ui-monospace, monospace;
+  background:linear-gradient(155deg,#ffffff 0%,#f6f6f4 45%,#e9e8e4 100%);
+  box-shadow:0 1.6em 2.4em -.4em rgba(0,0,0,.28),0 .35em .6em rgba(0,0,0,.14),inset .14em .14em 0 #ffffff,inset -.12em -.1em .25em rgba(0,0,0,.07),inset 0 -.6em 0 #d8d7d2,inset 0 -.68em .35em rgba(0,0,0,.08)}
+.recm button{font-family:inherit;font-size:inherit;border:0;padding:0;cursor:pointer}
+.rec-well{position:absolute;left:.7em;right:.7em;top:.7em;height:9.5em;border-radius:1.15em;padding:.16em;box-sizing:border-box;background:linear-gradient(#c9c8c3,#fafaf9);box-shadow:inset 0 .06em .12em rgba(0,0,0,.25)}
+.rec-screen{height:100%;border-radius:1em;background:#161618}
+.rec-over{position:absolute;left:.86em;top:.86em;width:13.28em;height:9.18em;border-radius:1em;overflow:hidden;z-index:4;pointer-events:none}
+.rec-over::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.08) 0 32%,transparent 32.5%)}
+.rec-fm{position:absolute;right:.75em;top:.62em;line-height:1;display:flex;align-items:center;gap:.3em}
+.rec-fm b{font:500 .6em/1 'JetBrains Mono', monospace;color:#8d8d90;letter-spacing:.06em}
+.rec-fm i{width:.38em;height:.38em;border-radius:50%;background:#4a4a4e}
+.playing .rec-fm i{background:#ff6a2b;box-shadow:0 0 .35em #ff6a2b}
+.rec-wave{position:absolute;left:.5em;right:.5em;top:1.75em;height:3.3em;display:flex;align-items:center;justify-content:space-between}
+.rec-wave b{display:block;width:.1em;height:.1em;border-radius:.05em;background:#6d6d70;transform-origin:center}
+.rec-wave b.on{height:var(--h);background:#f2f2f2;box-shadow:0 0 .2em rgba(255,255,255,.25)}
+.playing .rec-wave b.on{animation:recbar .7s ease-in-out infinite alternate}
+@keyframes recbar{from{transform:scaleY(.55)}to{transform:scaleY(1.08)}}
+.rec-head{position:absolute;top:-.25em;bottom:-.25em;left:calc(var(--p, 0) * 100%);width:.1em;background:#ff6a2b;box-shadow:0 0 .45em rgba(255,106,43,.7)}
+body.model-rec .stage .lcd{border:0;border-radius:1em;background:radial-gradient(120% 90% at 30% 0%,#2a2a2d,#161618 70%);box-shadow:inset 0 .25em .6em rgba(0,0,0,.85);
+  flex-direction:column;justify-content:space-between;align-items:stretch;padding:.5em .55em .3em;color:#f4f4f4;font-family:'JetBrains Mono', ui-monospace, monospace}
+body.model-rec .stage .lcd .msg{flex:none;width:62%;font-size:.62em;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:0 .3em;justify-content:flex-start}
+body.model-rec .stage .lcd .split{display:none}
+body.model-rec .stage .lcd .count{width:auto;align-items:flex-start;padding:0}
+body.model-rec .stage .lcd .count .digits[data-len="8"]{font-size:2.05em}
+body.model-rec .stage .lcd .count .digits{font-size:2.3em;font-weight:300;line-height:1;letter-spacing:-.03em;text-shadow:0 0 .15em rgba(255,255,255,.2)}
+body.model-rec .ytbox iframe{opacity:.3}
+.rec-grille{position:absolute;left:1em;right:1em;top:10.75em;height:1.9em;background:radial-gradient(circle at 50% 40%,#9e9d98 .06em,#d6d5d0 .075em,transparent .1em) 0 0/.34em .34em}
+.rec-tray{position:absolute;left:.7em;right:.7em;top:13.05em;height:5.6em;box-sizing:border-box;border-radius:.85em;padding:.14em;background:linear-gradient(#3f3f44,#56565b);box-shadow:inset 0 .12em .25em rgba(0,0,0,.6),0 .06em 0 #fff}
+.rec-keys{height:100%;display:grid;grid-template-columns:1fr 1fr .95fr;grid-template-rows:1fr 1fr;gap:.13em}
+.recm .rec-k{border-radius:.62em;display:grid;place-items:center;background:linear-gradient(170deg,#ffffff,#f1f0ed 55%,#e3e2de);
+  box-shadow:inset 0 .09em 0 #fff,inset 0 -.16em 0 #d2d1cc,0 .1em .18em rgba(0,0,0,.35)}
+.recm .rec-k:active{box-shadow:inset 0 .09em .2em rgba(0,0,0,.15),0 .04em .08em rgba(0,0,0,.3);transform:translateY(.05em)}
+.rec-k.big{grid-row:span 2}
+.rec-ring{width:2em;height:2em;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#e2e1dd,#fbfbfa 70%);box-shadow:inset 0 .1em .18em rgba(0,0,0,.18),0 .05em 0 #fff}
+.rec-sring{width:1.3em;height:1.3em;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#e2e1dd,#fbfbfa 70%);box-shadow:inset 0 .07em .14em rgba(0,0,0,.18),0 .04em 0 #fff}
+.rec-dot{width:.62em;height:.62em;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ff9a62,#ff6a2b 60%,#e2521a)}
+.running .rec-dot{box-shadow:0 0 .5em rgba(255,106,43,.8)}
+.paused .rec-dot{animation:blink 1.2s steps(2) infinite}
+.rec-sq{width:.5em;height:.5em;border-radius:.07em;background:linear-gradient(#6a6a6e,#4e4e52)}
+.rec-tri{width:0;height:0;border-left:.36em solid #6e6e72;border-top:.23em solid transparent;border-bottom:.23em solid transparent;margin-left:.08em}
+.rec-bars{display:none;gap:.1em}.rec-bars i{width:.11em;height:.38em;border-radius:.03em;background:#6e6e72}
+#recRadio[aria-pressed="true"] .rec-tri{display:none}
+#recRadio[aria-pressed="true"] .rec-bars{display:flex}
+.rec-nx{display:flex;align-items:center}.rec-nx i{width:0;height:0;border-left:.26em solid #6e6e72;border-top:.19em solid transparent;border-bottom:.19em solid transparent}
+.rec-nx b{width:.07em;height:.38em;background:#6e6e72}
+.rec-foot{position:absolute;left:1.35em;right:1.35em;bottom:.62em;height:.44em;display:flex;align-items:center;gap:.3em}
+.rec-slot{width:1.8em;height:.44em;border-radius:1em;background:#2a2a2e;box-shadow:inset 0 .08em .12em rgba(0,0,0,.8),0 .05em 0 rgba(255,255,255,.6)}
+.recm .rec-sw{margin-left:auto;width:1.75em;height:.44em;border-radius:1em;background:#2a2a2e;position:relative;box-shadow:inset 0 .08em .12em rgba(0,0,0,.8)}
+.rec-sw::after{content:"";position:absolute;left:-.02em;top:-.06em;width:1.05em;height:.56em;border-radius:1em;background:linear-gradient(#f4f4f2,#d8d7d2);box-shadow:0 .06em .1em rgba(0,0,0,.3),inset 0 .05em 0 #fff;transition:left .2s}
+.pomo .rec-sw::after{left:.72em;background:linear-gradient(#ffa063,#ff6a2b)}
+@media (prefers-reduced-motion: reduce){.playing .rec-wave b.on{animation:none}}
+
 /* ---------- log ---------- */
 .logs{position:fixed;inset:0;background:rgba(8,6,12,.6);z-index:20;display:flex;justify-content:flex-end}
 .logs-sheet{width:min(820px, 100%);height:100%;overflow-y:auto;background:var(--night);border-left:1px solid var(--line);padding-block:20px 32px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:grid;gap:16px;align-content:start}
@@ -483,6 +565,25 @@ td .del:hover{color:var(--red)}
           <button class="mac-port" id="macPort" type="button" title="Scroll for radio volume"></button>
         </div>
         <span class="mac-st" id="macStation"><b>FOCUS MN</b></span>
+        <div class="mac-mini">
+          <div class="mm-bez"><div class="mm-scr" id="macMiniScreen"></div></div>
+          <i class="mm-seam"></i><i class="mm-slot"></i>
+          <div class="mm-ledge"><button class="mm-badge" id="macMiniBadge" type="button" aria-pressed="false" title="Radio on or off"></button></div>
+          <i class="mm-base"></i>
+        </div>
+      </div>
+      <!-- FOCUS MN Recorder: a white pocket recorder. The screen floats over #recScreen; the waveform above it shows session progress. -->
+      <div class="recm" id="recm" hidden>
+        <div class="rec-well"><div class="rec-screen" id="recScreen"></div></div>
+        <div class="rec-over"><span class="rec-fm"><i></i><b id="recFm">FM 88.6</b></span><div class="rec-wave" id="recWave"><i class="rec-head"></i></div></div>
+        <div class="rec-grille"></div>
+        <div class="rec-tray"><div class="rec-keys">
+          <button class="rec-k big" id="recStart" type="button" title="Start or pause"><span class="rec-ring"><span class="rec-dot"></span></span></button>
+          <button class="rec-k big" id="recStop" type="button" title="Stop"><span class="rec-ring"><span class="rec-sq"></span></span></button>
+          <button class="rec-k" id="recRadio" type="button" aria-pressed="false" title="Radio on or off"><span class="rec-sring"><span class="rec-tri"></span><span class="rec-bars"><i></i><i></i></span></span></button>
+          <button class="rec-k" id="recNext" type="button" title="Next station"><span class="rec-sring"><span class="rec-nx"><i></i><b></b></span></span></button>
+        </div></div>
+        <div class="rec-foot"><span class="rec-slot"></span><span class="rec-slot"></span><button class="rec-sw" id="recMode" type="button" title="Timer or Pomodoro"></button></div>
       </div>
       <!-- The one screen (video, Focus text, timer). It floats over the active design's screen area, so switching designs never reloads the video. -->
       <div class="lcd" aria-live="polite">
@@ -647,12 +748,16 @@ const store = {
 };
 // The widget scales with the window width; its height follows from the radio's shape.
 // Widget sizes: under 300 px wide is the pocket layout, under 420 px the compact one.
-const sizeFor = w => w < 300 ? 'xs' : w < 420 ? 'sm' : 'full';
-const modelOf = id => (id || '').startsWith('gameboy') ? 'gb' : (id || '').startsWith('classic') ? 'mac' : 'radio';
-const spanFor = w => modelOf(S.skin) === 'gb' ? 25 : modelOf(S.skin) === 'mac' ? 20 : ({xs: 17, sm: 27, full: 33})[sizeFor(w)];
+const sizeFor = w => w < 200 ? 'xxs' : w < 300 ? 'xs' : w < 420 ? 'sm' : 'full';
+// XXS is a real layout only for Classic and Recorder; the radio and Pocket designs show their XS layout instead.
+const XXS_WIDTH = {mac: 144, rec: 190, radio: 240, gb: 240};
+const modelOf = id => (id || '').startsWith('gameboy') ? 'gb' : (id || '').startsWith('classic') ? 'mac' : (id || '').startsWith('recorder') ? 'rec' : 'radio';
+const spanFor = w => { const m = modelOf(S.skin), size = sizeFor(w);
+  return m === 'gb' ? 25 : m === 'mac' ? (size === 'xxs' ? 10.4 : 20) : m === 'rec' ? 16 : ({xxs: 17, xs: 17, sm: 27, full: 33})[size]; };
 function applySize(w) {
   if (!NATIVE) return;
   const size = sizeFor(w);
+  document.body.classList.toggle('size-xxs', size === 'xxs');
   document.body.classList.toggle('size-xs', size === 'xs');
   document.body.classList.toggle('size-sm', size === 'sm');
 }
@@ -671,7 +776,8 @@ function fitWindow(w) {
 }
 function doFit(w) {
   if (!$('#logs').hidden) { native({type: 'resize', w: 860, h: 700, lock: false}); return; }
-  w = Math.min(600, Math.max(220, Math.round(w || S.widgetW || 340)));
+  w = Math.min(600, Math.max(120, Math.round(w || S.widgetW || 340)));
+  if (sizeFor(w) === 'xxs') w = XXS_WIDTH[modelOf(S.skin)];
   applySize(w);
   const h = radioHeightFor(w);
   if (Number.isFinite(h) && h >= 120) native({type: 'resize', w, h, lock: true});
@@ -697,8 +803,10 @@ if (NATIVE) {
 function setWidgetWidth(w) { S.widgetW = w; saveState(); if ($('#logs').hidden) fitWindow(w); }
 let resizeT;
 addEventListener('resize', () => {
-  if (!NATIVE || !$('#logs').hidden || innerWidth < 200) return;
-  if (innerWidth !== S.widgetW) { S.widgetW = innerWidth; saveState(); }
+  if (!NATIVE || !$('#logs').hidden || innerWidth < 120) return;
+  // Keep an XXS choice even while a design without an XXS layout is showing.
+  const keepXXS = sizeFor(S.widgetW || 340) === 'xxs' && innerWidth === XXS_WIDTH[modelOf(S.skin)];
+  if (innerWidth !== S.widgetW && !keepXXS) { S.widgetW = innerWidth; saveState(); }
   // Dragging a corner across a size boundary changes the layout, so refit once the drag settles.
   const before = document.body.className;
   applySize(innerWidth);
@@ -860,10 +968,35 @@ function renderClock() {
   else if (S.mode === 'pomo') ms = focusMs() - elapsed();
   else ms = elapsed();
   $('#digits').textContent = clock(ms, hours);
+  $('#digits').dataset.len = $('#digits').textContent.length;
   statusLcd();
+  if (modelOf(S.skin) === 'rec') recProgress();
   // The menu bar shows the timer too, so it can be read with the widget hidden.
   const menuText = S.status === 'idle' ? '' : (S.status === 'paused' ? '\u23f8 ' : S.status === 'break' ? 'Break ' : '') + clock(ms, hours);
   if (menuText !== lastMenuText) { lastMenuText = menuText; native({type: 'clock', text: menuText}); }
+}
+// Recorder waveform: bars up to the playhead are time done (Pomodoro block, break, or the current hour when counting up).
+const REC_BARS = 34;
+(() => {
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < REC_BARS; i++) {
+    const b = document.createElement('b');
+    b.style.setProperty('--h', (18 + rnd() * 70 * (.55 + .45 * Math.sin(i / 3.2) ** 2)).toFixed(1) + '%');
+    b.style.animationDelay = (-(i * 0.137) % .7).toFixed(2) + 's';
+    $('#recWave').append(b);
+  }
+})();
+let recShown = -1;
+function recProgress() {
+  let p = 0;
+  if (S.status === 'break') p = 1 - Math.max(0, S.breakEnds - Date.now()) / breakMs();
+  else if (S.status !== 'idle') p = S.mode === 'pomo' ? elapsed() / focusMs() : (elapsed() % 3600e3) / 3600e3;
+  p = Math.min(1, Math.max(0, p));
+  $('#recWave').style.setProperty('--p', p.toFixed(4));
+  const on = Math.round(p * REC_BARS);
+  if (on === recShown) return;
+  recShown = on;
+  $('#recWave').querySelectorAll('b').forEach((b, i) => b.classList.toggle('on', i < on));
 }
 function render() {
   const startLabel = S.status === 'running' ? 'Pause' : S.status === 'paused' ? 'Resume' : 'Start';
@@ -964,6 +1097,7 @@ function tuneTo(i) {
   $('#freq').textContent = st.f.toFixed(1);
   $('#stName').textContent = st.name;
   $('#gbStation').textContent = `FOCUS MN \u00b7 ${st.name}`;
+  $('#recFm').textContent = `FM ${st.f.toFixed(1)}`;
   $('#macStation').firstElementChild.textContent = st.name;
   $('#dial').title = `${st.name}, ${st.f.toFixed(1)} FM. Click to choose a station, scroll to tune.`;
   reportStation();
@@ -1059,13 +1193,13 @@ function setRadio(on) {
   radioOn = on;
   $('#pwrBtn').setAttribute('aria-pressed', on);
   $('#gbSwitch').setAttribute('aria-pressed', on);
-  $('#macBadge').setAttribute('aria-pressed', on);
+  $('#macBadge').setAttribute('aria-pressed', on); $('#macMiniBadge').setAttribute('aria-pressed', on); $('#recRadio').setAttribute('aria-pressed', on);
   if (on) tuneTo(S.station);
   else { audio.pause(); audio.removeAttribute('src'); audio.load(); stopYT(); $('#stage').classList.remove('playing'); showMsg('Radio off.', 'static', 2500); reportStation(); }
 }
 // Picking a station (from the list or the menu bar) turns the radio on.
 function playStation(i) {
-  if (!radioOn) { radioOn = true; $('#pwrBtn').setAttribute('aria-pressed', true); $('#gbSwitch').setAttribute('aria-pressed', true); $('#macBadge').setAttribute('aria-pressed', true); }
+  if (!radioOn) { radioOn = true; $('#pwrBtn').setAttribute('aria-pressed', true); $('#gbSwitch').setAttribute('aria-pressed', true); $('#macBadge').setAttribute('aria-pressed', true); $('#macMiniBadge').setAttribute('aria-pressed', true); $('#recRadio').setAttribute('aria-pressed', true); }
   tuneTo(i);
 }
 // The menu bar's Station menu ticks the current station and shows Radio On or Off.
@@ -1110,6 +1244,12 @@ function nudgeVolume(step) {
 $('#macStart').onclick = start;
 $('#macStop').onclick = stop;
 $('#macEject').onclick = () => $('#gbMode').click();
+$('#macMiniBadge').onclick = () => setRadio(!radioOn);
+$('#recStart').onclick = start;
+$('#recStop').onclick = stop;
+$('#recRadio').onclick = () => setRadio(!radioOn);
+$('#recNext').onclick = () => playStation(S.station + 1);
+$('#recMode').onclick = () => $('#gbMode').click();
 $('#macBadge').onclick = () => setRadio(!radioOn);
 $('#macWheel').onclick = togglePicker;
 $('#macWheel').addEventListener('wheel', e => {
@@ -1135,7 +1275,7 @@ $('#gbMode').onclick = () => {
 document.querySelectorAll('.gb-dpad .dz').forEach(b => b.onclick = () => {
   const d = b.dataset.d;
   if (d === 'left' || d === 'right') {
-    if (!radioOn) { radioOn = true; $('#pwrBtn').setAttribute('aria-pressed', true); $('#gbSwitch').setAttribute('aria-pressed', true); $('#macBadge').setAttribute('aria-pressed', true); }
+    if (!radioOn) { radioOn = true; $('#pwrBtn').setAttribute('aria-pressed', true); $('#gbSwitch').setAttribute('aria-pressed', true); $('#macBadge').setAttribute('aria-pressed', true); $('#macMiniBadge').setAttribute('aria-pressed', true); $('#recRadio').setAttribute('aria-pressed', true); }
     tuneTo(S.station + (d === 'right' ? 1 : -1));
   } else nudgeVolume(d === 'up' ? .05 : -.05);
 });
@@ -1293,18 +1433,19 @@ $('#exportCsv').onclick = () => {
 
 /* ---------- skins ---------- */
 const SKINS = [['walnut', 'Walnut'], ['mint', 'Mint'], ['midnight', 'Midnight'], ['cherry', 'Cherry'],
-  ['gameboy', 'FOCUS MN Pocket'], ['gameboy-dark', 'FOCUS MN Pocket Dark'], ['classic', 'FOCUS MN Classic'], ['classic-dark', 'FOCUS MN Classic Dark']];
+  ['gameboy', 'FOCUS MN Pocket'], ['gameboy-dark', 'FOCUS MN Pocket Dark'], ['classic', 'FOCUS MN Classic'], ['classic-dark', 'FOCUS MN Classic Dark'], ['recorder', 'FOCUS MN Recorder']];
 const PIXEL = [];
 // The screen is one element on the stage, laid over the active design's screen area. It is never moved
 // in the page, because moving the YouTube frame would reload it and stop the music.
 function placeScreen() {
-  const model = modelOf(S.skin), slot = model === 'gb' ? $('#gbScreen') : model === 'mac' ? $('#macScreen') : $('#radioSlot');
+  const model = modelOf(S.skin), xxs = document.body.classList.contains('size-xxs');
+  const slot = model === 'gb' ? $('#gbScreen') : model === 'mac' ? $(xxs ? '#macMiniScreen' : '#macScreen') : model === 'rec' ? $('#recScreen') : $('#radioSlot');
   const lcd = $('.lcd'), stage = $('#stage').getBoundingClientRect(), r = slot.getBoundingClientRect();
   if (!r.width) return;
   Object.assign(lcd.style, {left: (r.left - stage.left) + 'px', top: (r.top - stage.top) + 'px', width: r.width + 'px', height: r.height + 'px'});
 }
 const screenWatch = new ResizeObserver(placeScreen);
-[$('#stage'), $('#radioSlot'), $('#gbScreen'), $('#macScreen')].forEach(el => screenWatch.observe(el));
+[$('#stage'), $('#radioSlot'), $('#gbScreen'), $('#macScreen'), $('#macMiniScreen'), $('#recScreen')].forEach(el => screenWatch.observe(el));
 addEventListener('resize', placeScreen);
 function setSkin(id) {
   if (!SKINS.some(k => k[0] === id)) id = 'walnut';
@@ -1312,6 +1453,8 @@ function setSkin(id) {
   const model = modelOf(id);
   $('#gbm').hidden = model !== 'gb';
   $('#macm').hidden = model !== 'mac';
+  $('#recm').hidden = model !== 'rec';
+  document.body.classList.toggle('model-rec', model === 'rec');
   document.body.classList.toggle('model-gb', model === 'gb');
   document.body.classList.toggle('model-mac', model === 'mac');
   document.body.classList.toggle('dark', id.endsWith('-dark'));
@@ -1330,8 +1473,8 @@ const params = new URLSearchParams(location.search);
 if (LOGS_WINDOW) { $('#logs').hidden = false; renderLogs(); }
 else if (TOPIC_WINDOW) { pending = window.__TOPIC; document.fonts.ready.then(openSheet); } else {
 setSkin(params.get('skin') || S.skin || 'walnut');
-// ?size=sm or ?size=xs previews the desktop widget's smaller layouts in a browser.
-if (['sm', 'xs'].includes(params.get('size'))) document.body.classList.add('native', 'size-' + params.get('size'));
+// ?size=sm, ?size=xs or ?size=xxs previews the desktop widget's smaller layouts in a browser.
+if (['sm', 'xs', 'xxs'].includes(params.get('size'))) document.body.classList.add('native', 'size-' + params.get('size'));
 // ?demo shows a session in progress, used for preview images.
 if (params.has('demo')) { S.status = 'running'; S.segStart = Date.now() - (42 * 60 + 17) * 1000; S.acc = 0; $('#stage').classList.add('playing'); $('.top').hidden = $('.hint').hidden = true; }
 drawDial();

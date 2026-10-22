@@ -23,9 +23,10 @@
   - `resolve`: find a YouTube stream ID.
   - `copy`, `csv`, `closeLogs`.
 - **App to page:** `evaluateJavaScript` calls `start()`, `stop()`, `setMode()`, `setSkin()`, `setWidgetWidth()`, `playStation()`, `setRadio()`, `openLogs()`, `ytResolved()`.
-- **Designs ("models"):** `modelOf(skin)` picks one of three: the radio (skins Walnut, Mint, Midnight, Cherry), `gb` (FOCUS MN Pocket) and `mac` (FOCUS MN Classic). Each model has `-dark` variants. Body classes: `model-gb`, `model-mac`, `dark`.
-- **The screen** (`.lcd`: video, Focus text, timer) is one element on the stage, positioned over the active model's screen slot (`#radioSlot`, `#gbScreen`, `#macScreen`) by `placeScreen()`. Never move it in the DOM: moving the YouTube iframe reloads it and stops the music.
-- **Sizes:** XS 240, Small 340, Medium 460 (menu). `sizeFor()` switches radio layouts at 300 and 420 px; `--span` sets how many em fit across.
+- **Designs ("models"):** `modelOf(skin)` picks one of four: the radio (skins Walnut, Mint, Midnight, Cherry), `gb` (FOCUS MN Pocket), `mac` (FOCUS MN Classic) and `rec` (FOCUS MN Recorder). Pocket and Classic have `-dark` variants. Body classes: `model-gb`, `model-mac`, `model-rec`, `dark`.
+- **Recorder:** the waveform above its screen is session progress (`recProgress()`): bars up to the playhead are the Pomodoro block, the break, or the current hour when counting up. The keys are start/pause, stop, radio and next station; the slider switches Timer and Pomodoro.
+- **The screen** (`.lcd`: video, Focus text, timer) is one element on the stage, positioned over the active model's screen slot (`#radioSlot`, `#gbScreen`, `#macScreen`, `#macMiniScreen`, `#recScreen`) by `placeScreen()`. Never move it in the DOM: moving the YouTube iframe reloads it and stops the music.
+- **Sizes:** XXS 150, XS 240, Small 340, Medium 460 (menu). `sizeFor()` switches layouts at 200, 300 and 420 px; `--span` sets how many em fit across. At XXS, `XXS_WIDTH` sets each model's real window width: Classic uses its tall mini layout (144), Recorder its smallest size (190), and the radio and Pocket fall back to XS (240).
 
 ## Stations
 

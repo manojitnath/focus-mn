@@ -15,7 +15,7 @@ A small floating study radio for macOS: a focus timer with Pomodoro, lofi live s
 - **Timer:** count up, or Pomodoro blocks of 20, 40 or 60 minutes with 5 or 10 minute breaks. When a block ends you get a chime and a notification, then the widget asks what the session was and whether to take a break.
 - **Radio:** ten lofi live streams (Lofi Girl, Chillhop and others). Pick a station on the widget or from the menu bar. When a stream's ID changes, the app finds the current one.
 - **Study log:** every session over a minute is logged by topic. Open Logs shows totals by day, week, month or a custom range, and can export to CSV.
-- **Skins:** Walnut, Mint, Midnight, Cherry, FOCUS MN Pocket and FOCUS MN Classic, some with dark versions. Three sizes (XS, Small, Medium).
+- **Skins:** Walnut, Mint, Midnight, Cherry, FOCUS MN Pocket, FOCUS MN Classic and FOCUS MN Recorder, some with dark versions. Four sizes (XXS, XS, Small, Medium); XXS is a tiny layout for Classic and Recorder, and the other skins show their XS layout there.
 - **Menu bar:** start, pause and stop, the running time next to the icon, station, timer mode, size, skin and Keep on Top.
 
 ## Install
