@@ -32,6 +32,16 @@ Needs macOS 13 or later.
 
 Focus MN has no Dock icon. Look for the radio icon in the menu bar.
 
+## Updates
+
+Focus MN checks GitHub for a new release when it opens and once a day. When there is one, you get a notification and an **Update Available** item at the top of the menu bar menu; either opens the download page. You can also choose **Check for Updates…** from the menu. Versions before 1.2 don't check, so if you have 1.0 or 1.1, download the latest once by hand.
+
+To update, quit Focus MN, replace `Focus MN.app` in Applications with the new one, and open it. To hear about new versions by email instead, click **Watch → Custom → Releases** on this repository.
+
+The check is a single request to GitHub's public API. It sends nothing about you or your sessions.
+
+**Your log and settings are kept** when you update, or even if you delete the app and install it again. They live in `~/Library/Application Support/Focus MN/`, not inside the app. They're only lost if you delete that folder, or use an uninstaller that removes an app's support files (such as AppCleaner).
+
 ## Build from source
 
 Needs the Xcode Command Line Tools (`xcode-select --install`).

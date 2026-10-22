@@ -45,6 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     var stationMenu = NSMenu()
     var radioItem: NSMenuItem!
     var stopItem: NSMenuItem!
+    var updateItem: NSMenuItem?
+    var updateURL: URL?
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     lazy var stateDir = supportDir.appendingPathComponent("Focus MN")
     var logDir: URL {
@@ -104,6 +106,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         buildStatusItem()
+        // Look for a newer release now and once a day.
+        checkForUpdate()
+        Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.checkForUpdate() }
     }
 
     // Both windows run the same page. The saved data is handed to it before its script runs.
@@ -271,10 +276,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
-    func notify(title: String, body: String) {
+    func notify(title: String, body: String, url: URL? = nil) {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
+        if let url { content.userInfo = ["url": url.absoluteString] }
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }
 
@@ -286,8 +292,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
-        showWindow()   // clicking the notification brings up the widget
+        // Clicking an update notice opens the download page; any other brings up the widget.
+        if let link = response.notification.request.content.userInfo["url"] as? String, let url = URL(string: link) {
+            NSWorkspace.shared.open(url)
+        } else {
+            showWindow()
+        }
         completionHandler()
+    }
+
+    // Updates: ask GitHub for the latest release and compare it with this build's version.
+    // Nothing is downloaded or installed; the menu and a notification point to the release page.
+    func checkForUpdate(manual: Bool = false) {
+        var request = URLRequest(url: URL(string: "https://api.github.com/repos/manojitnath/focus-mn/releases/latest")!, timeoutInterval: 20)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            let release = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            DispatchQueue.main.async { self.handleRelease(release, manual: manual) }
+        }.resume()
+    }
+
+    func handleRelease(_ release: [String: Any]?, manual: Bool) {
+        let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        guard let tag = release?["tag_name"] as? String, let page = (release?["html_url"] as? String).flatMap(URL.init(string:)) else {
+            if manual { notify(title: "Couldn't check for updates", body: "GitHub didn't answer. Try again later.") }
+            return
+        }
+        let latest = tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        guard isVersion(latest, newerThan: current) else {
+            if manual { notify(title: "Focus MN is up to date", body: "You have the latest version, \(current).") }
+            return
+        }
+        updateURL = page
+        if updateItem == nil, let menu = statusItem.menu {
+            let item = NSMenuItem(title: "", action: #selector(openUpdate), keyEquivalent: "")
+            item.target = self
+            menu.insertItem(item, at: 0)
+            menu.insertItem(.separator(), at: 1)
+            updateItem = item
+        }
+        updateItem?.title = "Update Available: \(latest)…"
+        // Each new version is announced once; a manual check always answers.
+        if manual || UserDefaults.standard.string(forKey: "NotifiedVersion") != latest {
+            UserDefaults.standard.set(latest, forKey: "NotifiedVersion")
+            notify(title: "Focus MN \(latest) is out", body: "Click to download it. Your log and settings are kept.", url: page)
+        }
+    }
+
+    // Compares dotted versions number by number, so 1.10 is newer than 1.9.
+    func isVersion(_ a: String, newerThan b: String) -> Bool {
+        let x = a.split(separator: ".").map { Int($0) ?? 0 }, y = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let p = i < x.count ? x[i] : 0, q = i < y.count ? y[i] : 0
+            if p != q { return p > q }
+        }
+        return false
     }
 
     // Resize around the window's top centre, kept on screen.
@@ -364,8 +423,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         onTopItem = NSMenuItem(title: "Keep on Top", action: #selector(toggleOnTop), keyEquivalent: "")
         onTopItem.state = .on
         menu.addItem(onTopItem)
-        menu.items.forEach { $0.target = self }
         menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesNow), keyEquivalent: ""))
+        menu.items.forEach { $0.target = self }
         menu.addItem(NSMenuItem(title: "Quit Focus MN", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
@@ -436,6 +496,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         showWindow()
         web.evaluateJavaScript("setSkin('\(id)')")
     }
+    @objc func openUpdate() { if let updateURL { NSWorkspace.shared.open(updateURL) } }
+    @objc func checkForUpdatesNow() { checkForUpdate(manual: true) }
     @objc func toggleOnTop() {
         window.level = window.level == .floating ? .normal : .floating
         onTopItem.state = window.level == .floating ? .on : .off
