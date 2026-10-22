@@ -880,6 +880,11 @@ function recentTopics(n = 6) {
 }
 function openSheet() {
   $('#sheetDur').textContent = `${dur(pending.ms)} of focus, ${fmtTime(pending.start)} to ${fmtTime(pending.end)}`;
+  // In the app the question opens in its own window, which answers through saveSession() or discardSession().
+  if (NATIVE && !LOGS_WINDOW) {
+    native({type: 'askTopic', dur: $('#sheetDur').textContent, recent: recentTopics(4), all: [...new Set(logs.map(l => l.topic))].sort((x, y) => x.localeCompare(y))});
+    return;
+  }
   const topics = recentTopics();
   $('#chips').innerHTML = '';
   topics.forEach(t => {
@@ -892,18 +897,23 @@ function openSheet() {
   $('#sheet').hidden = false;
   setTimeout(() => $('#topicInput').focus(), 60);
 }
+function saveSession(topic) {
+  if (!pending) return;
+  logs.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), start: pending.start, end: pending.end, ms: pending.ms, topic});
+  saveLogs();
+  showMsg('Good job!', 'static', 5000);
+  pending = null; closeSheet();
+  if (!$('#logs').hidden) renderLogs();
+  askBreak();
+}
+function discardSession() { pending = null; closeSheet(); showMsg('Session discarded.', 'static', 3000); askBreak(); }
 $('#sheetForm').addEventListener('submit', e => {
   e.preventDefault();
   const input = $('#topicInput'), topic = input.value.trim();
   if (!topic) { input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake'); input.focus(); return; }
-  logs.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), start: pending.start, end: pending.end, ms: pending.ms, topic});
-  saveLogs();
-  showMsg(`Logged ${dur(pending.ms)}: ${topic}`, 'static', 5000);
-  pending = null; closeSheet();
-  if (!$('#logs').hidden) renderLogs();
-  askBreak();
+  saveSession(topic);
 });
-$('#discardBtn').onclick = () => { pending = null; closeSheet(); showMsg('Session discarded.', 'static', 3000); askBreak(); };
+$('#discardBtn').onclick = discardSession;
 
 /* ---------- radio ---------- */
 const audio = new Audio();

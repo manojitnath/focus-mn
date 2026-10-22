@@ -46,6 +46,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     var radioItem: NSMenuItem!
     var stopItem: NSMenuItem!
     var updateItem: NSMenuItem?
+    var topicPanel: NSPanel?
+    var topicBox: NSComboBox!
     var updateURL: URL?
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     lazy var stateDir = supportDir.appendingPathComponent("Focus MN")
@@ -139,7 +141,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
         let fromLogs = logsWeb != nil && message.webView === logsWeb
         // Only the widget may move, resize or retitle the widget.
-        if fromLogs && ["resize", "hit", "mode", "status", "skin", "clock", "notify", "stations", "station"].contains(type) { return }
+        if fromLogs && ["resize", "hit", "mode", "status", "skin", "clock", "notify", "stations", "station", "askTopic"].contains(type) { return }
         switch type {
         case "store":
             if let key = body["key"] as? String, let value = body["value"] as? String {
@@ -151,6 +153,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                     other?.evaluateJavaScript("window.__syncLogs && __syncLogs(\(value))")
                 }
             }
+        case "askTopic":
+            askTopic(duration: body["dur"] as? String ?? "", recent: body["recent"] as? [String] ?? [], all: body["all"] as? [String] ?? [])
         case "closeLogs":
             logsWindow?.orderOut(nil)
         case "resize":
@@ -299,6 +303,85 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             showWindow()
         }
         completionHandler()
+    }
+
+    // "What was this session?" in its own window, so it is full size whatever size the widget is.
+    func askTopic(duration: String, recent: [String], all: [String]) {
+        topicPanel?.close()
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 440, height: 220), styleMask: [.titled], backing: .buffered, defer: false)
+        panel.title = "Focus MN"
+        panel.level = .floating
+        panel.isReleasedWhenClosed = false
+
+        let heading = NSTextField(labelWithString: "What was this session?")
+        heading.font = .systemFont(ofSize: 20, weight: .semibold)
+        let detail = NSTextField(labelWithString: duration)
+        detail.font = .systemFont(ofSize: 13)
+        detail.textColor = .secondaryLabelColor
+
+        topicBox = NSComboBox()
+        topicBox.addItems(withObjectValues: recent + all.filter { !recent.contains($0) })
+        topicBox.completes = true
+        topicBox.placeholderString = "e.g. AWS AI Practitioner, Domain 2"
+        topicBox.font = .systemFont(ofSize: 15)
+        topicBox.widthAnchor.constraint(equalToConstant: 392).isActive = true
+
+        // Recent topics as one-click buttons.
+        let chips = NSStackView(views: recent.map { topic in
+            let chip = NSButton(title: topic, target: self, action: #selector(pickTopic(_:)))
+            chip.bezelStyle = .recessed
+            chip.controlSize = .small
+            chip.cell?.lineBreakMode = .byTruncatingTail
+            chip.widthAnchor.constraint(lessThanOrEqualToConstant: 180).isActive = true
+            return chip
+        })
+        chips.spacing = 6
+
+        let discard = NSButton(title: "Discard", target: self, action: #selector(discardTopic))
+        let save = NSButton(title: "Save", target: self, action: #selector(saveTopic))
+        save.keyEquivalent = "\r"
+        let spacer = NSView()
+        let buttons = NSStackView(views: [spacer, discard, save])
+        buttons.widthAnchor.constraint(equalToConstant: 392).isActive = true
+
+        let stack = NSStackView(views: [heading, detail, topicBox] + (recent.isEmpty ? [] : [chips]) + [buttons])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 10
+        stack.setCustomSpacing(16, after: detail)
+        stack.setCustomSpacing(18, after: recent.isEmpty ? topicBox : chips)
+        stack.edgeInsets = NSEdgeInsets(top: 22, left: 24, bottom: 20, right: 24)
+        panel.contentView = stack
+        panel.setContentSize(stack.fittingSize)
+
+        // Centre it on the widget, kept on screen.
+        var frame = panel.frame
+        frame.origin = NSPoint(x: window.frame.midX - frame.width / 2, y: window.frame.midY - frame.height / 2)
+        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
+            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
+        }
+        panel.setFrame(frame, display: false)
+        topicPanel = panel
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+        panel.makeFirstResponder(topicBox)
+    }
+    @objc func pickTopic(_ sender: NSButton) {
+        topicBox.stringValue = sender.title
+        topicPanel?.makeFirstResponder(topicBox)
+    }
+    @objc func saveTopic() {
+        let topic = topicBox.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !topic.isEmpty else { NSSound.beep(); return }
+        guard let data = try? JSONSerialization.data(withJSONObject: String(topic.prefix(80)), options: .fragmentsAllowed),
+              let json = String(data: data, encoding: .utf8) else { return }
+        topicPanel?.close()
+        web.evaluateJavaScript("saveSession(\(json))")
+    }
+    @objc func discardTopic() {
+        topicPanel?.close()
+        web.evaluateJavaScript("discardSession()")
     }
 
     // Updates: ask GitHub for the latest release and compare it with this build's version.
