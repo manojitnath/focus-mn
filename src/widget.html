@@ -738,6 +738,9 @@ function showMsg(text, kind = 'static', hold = 6000, thenQueue = true) {
   msgEl.onanimationend = null;
   msgEl.classList.remove('scroll');
   msgEl.textContent = text;
+  // A message too wide for the screen scrolls instead of being cut off.
+  const box = msgEl.parentElement, pad = parseFloat(getComputedStyle(box).paddingLeft) + parseFloat(getComputedStyle(box).paddingRight);
+  if (msgEl.offsetWidth > box.clientWidth - pad) kind = 'scroll';
   if (kind === 'scroll' && !reduceMotion) {
     void msgEl.offsetWidth;
     msgEl.style.setProperty('--dur', (6 + text.length * .17) + 's');
@@ -785,7 +788,7 @@ function stop() {
   finish(st, ms);
 }
 function finish(startTs, ms) {
-  if (ms < MIN_LOG) { showMsg('Under a minute, so it was not logged.', 'static', 4000); return; }
+  if (ms < MIN_LOG) { showMsg('Too short to log, <1 min', 'static', 4000); return; }
   pending = {start: startTs, end: Date.now(), ms};
   openSheet();
 }
