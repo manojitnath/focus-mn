@@ -85,7 +85,7 @@ button{font-family:inherit}
 .picker button[aria-current="true"]{color:var(--lcd)}
 
 .lcd-slot{height:3.1em}
-body.size-xs .lcd-slot{height:4.9em}
+body.size-xs .lcd-slot{height:5.3em}
 .lcd{position:absolute;z-index:3;left:0;top:0;width:0;display:flex;align-items:stretch;height:3.1em;background:var(--lcd-bg);border-radius:.45em;border:.15em solid var(--lcd-edge);box-shadow:inset 0 0 1.2em color-mix(in srgb, var(--lcd) 12%, transparent),inset 0 .3em .6em rgba(0,0,0,.6);color:var(--lcd);font-family:var(--f-lcd);text-shadow:0 0 .35em color-mix(in srgb, var(--lcd) 60%, transparent);overflow:hidden}
 /* clean display: no scanlines over the text */
 /* YouTube stations: the live video fills the screen behind the text and timer */
@@ -208,7 +208,7 @@ body.size-xs .cabinet{padding:.75em;border-radius:1.2em}
 body.size-xs .face{padding:.75em;gap:.6em;border-radius:.8em}
 body.size-xs .badge{font-size:1em}
 body.size-xs .lcd{flex-direction:column;align-items:stretch;justify-content:center;padding:.35em 0 .45em}
-body.size-xs .msg{font-size:1.25em;padding:0 .5em}
+body.size-xs .msg{font-size:1.6em;padding:0 .5em}
 body.size-xs .split{display:none}
 body.size-xs .count{width:auto;align-items:center;padding:0}
 body.size-xs .count .digits{font-size:2.6em}
@@ -327,6 +327,11 @@ body.model-mac .stage .lcd:has(.msg span.scroll) .msg{justify-content:flex-start
 body.model-mac .stage .lcd .split{display:none}
 body.model-mac .stage .lcd .count{width:auto;align-items:center;padding:0}
 body.model-mac .stage .lcd .count .digits{font-size:2.2em;line-height:1.05;letter-spacing:-.02em}
+/* XS: the timer is easy to read, so make the words around it bigger too. */
+body.size-xs.model-gb .stage .lcd .msg{font-size:1.3em}
+body.size-xs.model-mac .stage .lcd .msg{font-size:1.15em}
+body.size-xs .gb-lbl{font-size:.6em;left:4.33em;right:4.33em;top:.94em}
+body.size-xs .mac-st b{font-size:.75em}
 body.model-mac .ytbox iframe{opacity:.58}
 body.model-mac .ytbox::after{background:rgba(0,0,0,.3)}
 
