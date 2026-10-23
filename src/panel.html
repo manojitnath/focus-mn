@@ -265,7 +265,29 @@ function cycleMode() {
   saveState(); render();
 }
 
+// After 30 minutes with nothing running, a macOS notification nudges you to start; its button starts counting up.
+const NUDGE_AFTER = 30 * MIN;
+const NUDGES = [
+  ['Start a session?', 'Time won\u2019t come back. Even 20 focused minutes counts.'],
+  ['Ready to focus?', 'The hardest part is starting. Let\u2019s go.'],
+  ['Your future self says hi', 'One focused session now beats an hour of scrolling.'],
+  ['Still here?', 'Pick one thing and give it your full attention.'],
+  ['Small steps, big progress', 'Start the timer and see where it takes you.'],
+];
+let idleSince = Date.now(), nudgeN = Math.floor(Math.random() * NUDGES.length);
+function nudgeCheck() {
+  if (S.status !== 'idle' || notice) { idleSince = Date.now(); return; }
+  if (Date.now() - idleSince < NUDGE_AFTER) return;
+  idleSince = Date.now();
+  const [title, body] = NUDGES[nudgeN++ % NUDGES.length];
+  native({type: 'nudge', title, body});
+}
+window.startCountUp = () => {
+  if (S.status !== 'idle') return;
+  present(null); S.mode = 'free'; beginFocus();
+};
 function tick() {
+  nudgeCheck();
   if (S.status === 'running' && S.mode === 'pomo' && elapsed() >= S.blockMin * MIN) {
     const total = S.carry + S.blockMin * MIN, st = S.startedAt;
     Object.assign(S, {status: 'idle', acc: 0, carry: 0, chained: false, segStart: 0, startedAt: 0});

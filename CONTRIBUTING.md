@@ -33,6 +33,7 @@
 - A finished block asks *Log it / Keep going*. Log it asks the topic, then *Take break / Start Focus*. Keep going adds a 30-minute block, logged as one session with the first; ending it early asks *Log it / Keep going* again.
 - Ending a Pomodoro early isn't logged; count-up under a minute isn't logged; breaks aren't logged. A finished break asks *Start Focus / +5 min*.
 - A session running when the app quits comes back paused, counting time up to the last save.
+- After 30 minutes idle (no timer, no break, no open question) the panel sends a `nudge`; the app posts a notification in the `NUDGE` category, whose **Let's start** action calls `startCountUp()`. It repeats every 30 minutes while idle.
 
 ## Stations
 
