@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus MN</title>
+<style>
+:root{--bg:#f5f5f4;--card:#fff;--ink:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--soft:rgba(0,0,0,.04);--accent:#e8743b;--pill:#1d1d1f;--pillInk:#fff;--shadow:0 1px 2px rgba(0,0,0,.04),0 0 0 .5px rgba(0,0,0,.06)}
+@media (prefers-color-scheme: dark){:root{--bg:#1c1c1e;--card:#2c2c2e;--ink:#f5f5f7;--muted:#98989d;--line:rgba(255,255,255,.1);--soft:rgba(255,255,255,.05);--pill:#f5f5f7;--pillInk:#1d1d1f;--shadow:0 0 0 .5px rgba(255,255,255,.08)}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+button{border:0;background:none;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+.wrap{max-width:980px;margin:0 auto;padding:22px 32px 40px}
+.tabs{display:flex;justify-content:center;margin-bottom:26px}
+.tabs div{display:flex;gap:2px;background:var(--card);border-radius:99px;padding:4px;box-shadow:var(--shadow)}
+.tabs button{display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:99px;font-weight:600;color:var(--muted)}
+.tabs button svg{width:15px;height:15px}
+.tabs button[aria-pressed="true"]{background:var(--soft);color:var(--ink);box-shadow:inset 0 0 0 .5px var(--line)}
+.title{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}
+h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.tools{display:flex;gap:10px;align-items:center}
+.range{display:flex;gap:2px;background:var(--card);border-radius:99px;padding:4px;box-shadow:var(--shadow)}
+.range button{padding:6px 13px;border-radius:99px;font-weight:600}
+.range button[aria-pressed="true"]{background:var(--pill);color:var(--pillInk)}
+.round{width:36px;height:36px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center}
+.round svg{width:16px;height:16px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+.card{background:var(--card);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+.card small{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card b{display:block;font-size:24px;font-weight:700;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card span{font-size:12px;color:var(--muted)}
+.panel{background:var(--card);border-radius:20px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:14px}
+.ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.ph h2{margin:0;font-size:17px;font-weight:700}
+.ph span{color:var(--muted);font-size:12.5px}
+.chart{display:grid;grid-template-columns:52px 1fr;height:230px}
+.yax{position:relative}.yax span{position:absolute;right:10px;transform:translateY(-50%);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.plot{position:relative;border-bottom:1px solid var(--line)}
+.plot .grid{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.bars{position:absolute;inset:0;display:flex;align-items:flex-end;gap:6px;padding:0 4px}
+.bars div{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
+.bars i{display:block;width:100%;max-width:46px;margin:0 auto;border-radius:6px 6px 2px 2px;background:var(--accent);min-height:0}
+.bars div:hover i{filter:brightness(1.08)}
+.bars div:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--pill);color:var(--pillInk);font-size:11px;padding:3px 7px;border-radius:6px;white-space:nowrap;z-index:2}
+.xax{display:flex;gap:6px;padding:8px 4px 0 56px}.xax span{flex:1;text-align:center;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.empty{color:var(--muted);padding:10px 0 2px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 120px 62px;gap:12px;align-items:center;padding:7px 0;border-top:.5px solid var(--line)}
+.trow:first-child{border-top:0}
+.trow .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.track{height:7px;border-radius:9px;background:var(--soft);overflow:hidden}.track i{display:block;height:100%;border-radius:9px;background:var(--accent)}
+.trow .h{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.hours{display:flex;align-items:flex-end;gap:3px;height:110px;padding-top:6px}
+.hours div{flex:1;height:100%;display:flex;align-items:flex-end}.hours i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);opacity:.85}
+.hlab{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:6px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 8px 8px}
+td{padding:9px 8px;border-top:.5px solid var(--line);font-variant-numeric:tabular-nums}
+td.t{font-weight:600;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.x{width:28px;text-align:right}
+.del{width:22px;height:22px;border-radius:6px;color:var(--muted);font-size:16px;line-height:1}.del:hover{background:var(--soft);color:#ff3b30}
+.filters{display:flex;gap:10px;align-items:center}
+select{background:var(--card);border:0;border-radius:99px;padding:7px 12px;box-shadow:var(--shadow)}
+.btn{background:var(--card);border-radius:99px;padding:8px 14px;font-weight:600;box-shadow:var(--shadow)}
+.btn.dark{background:var(--pill);color:var(--pillInk)}
+.group{background:var(--card);border-radius:16px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.group h3{margin:0;padding:14px 18px 6px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.set{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 18px;border-top:.5px solid var(--line)}
+.set:first-of-type{border-top:0}
+.set b{display:block;font-weight:600}.set span{color:var(--muted);font-size:12.5px}
+.set code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);word-break:break-all}
+.switch{width:38px;height:22px;border-radius:99px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .2s}
+.switch[aria-checked="true"]{background:#34c759}.switch[aria-checked="true"]::after{left:18px}
+kbd{font:600 12px -apple-system,system-ui;background:var(--soft);border-radius:6px;padding:3px 7px;box-shadow:inset 0 0 0 .5px var(--line)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--pill);color:var(--pillInk);border-radius:99px;padding:9px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast button{font-weight:700;color:var(--accent)}
+@media (max-width:760px){.cards{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs"><div id="tabs">
+    <button type="button" data-tab="stats"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="11" width="3.5" height="9" rx="1"/><rect x="10.25" y="5" width="3.5" height="15" rx="1"/><rect x="16.5" y="8" width="3.5" height="12" rx="1"/></svg>Stats</button>
+    <button type="button" data-tab="sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r=".6"/><circle cx="4" cy="12" r=".6"/><circle cx="4" cy="18" r=".6"/></svg>Sessions</button>
+    <button type="button" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</button>
+  </div></div>
+
+  <section id="stats">
+    <div class="title">
+      <div><h1>Focus Analytics</h1><p>Your focus time, sessions and topics.</p></div>
+      <div class="tools"><div class="range" data-range></div>
+        <button class="round" type="button" data-export title="Export CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button></div>
+    </div>
+    <div class="cards">
+      <div class="card"><small>Focus time</small><b id="cTime">0m</b><span id="cTimeSub"></span></div>
+      <div class="card"><small>Sessions</small><b id="cCount">0</b><span>focus blocks</span></div>
+      <div class="card"><small>Streak</small><b id="cStreak">0</b><span>days</span></div>
+      <div class="card"><small>Top topic</small><b id="cTop">None</b><span id="cTopSub"></span></div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>Focused Time</h2><span id="chartSub"></span></div>
+      <div class="chart"><div class="yax" id="yax"></div><div class="plot" id="plot"><div class="bars" id="bars"></div></div></div>
+      <div class="xax" id="xax"></div>
+      <div class="empty" id="chartEmpty" hidden>Start a focus session to build your analytics.</div>
+    </div>
+    <div class="split">
+      <div class="panel"><div class="ph"><h2>Topics</h2><span id="topicSub"></span></div><div id="topics"></div></div>
+      <div class="panel"><div class="ph"><h2>Best Hours</h2><span>when you focus</span></div>
+        <div class="hours" id="hours"></div><div class="hlab"><span>12 am</span><span>6 am</span><span>12 pm</span><span>6 pm</span><span>11 pm</span></div></div>
+    </div>
+  </section>
+
+  <section id="sessions" hidden>
+    <div class="title">
+      <div><h1>Sessions</h1><p>Every logged focus session.</p></div>
+      <div class="tools"><select id="topicSel"></select><div class="range" data-range></div></div>
+    </div>
+    <div class="panel">
+      <table><thead><tr><th>Date</th><th>Time</th><th>Topic</th><th>Focus</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+    <div class="filters"><button class="btn dark" id="copyToday" type="button">Copy today's hours</button><button class="btn" type="button" data-export>Export CSV</button></div>
+  </section>
+
+  <section id="settings" hidden>
+    <div class="title"><div><h1>Settings</h1><p>Focus MN lives in the menu bar. Click its time to open the timer.</p></div></div>
+    <div class="group"><h3>General</h3>
+      <div class="set"><div><b>Open at login</b><span>Start Focus MN when you log in to your Mac.</span></div><button class="switch" id="loginSw" role="switch" aria-checked="false" type="button"></button></div>
+      <div class="set"><div><b>Start or pause from anywhere</b><span>Works in any app.</span></div><kbd>⌃ ⌥ Space</kbd></div>
+    </div>
+    <div class="group"><h3>Your log</h3>
+      <div class="set"><div><b>Log folder</b><code id="folder"></code></div><div style="display:flex;gap:8px;flex:none"><button class="btn" id="reveal" type="button">Show in Finder</button><button class="btn" id="chooseFolder" type="button">Choose…</button></div></div>
+      <div class="set"><div><b>Export</b><span>Save every session as a CSV file in the log folder.</span></div><button class="btn" type="button" data-export>Export CSV</button></div>
+    </div>
+    <div class="group"><h3>About</h3>
+      <div class="set"><div><b>Focus MN <span id="ver"></span></b><span>A focus timer and lofi radio for your menu bar.</span></div><button class="btn" id="updates" type="button">Check for Updates</button></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const NATIVE = !!window.__NATIVE, DAY = 864e5;
+const native = msg => { try { window.webkit.messageHandlers.native.postMessage(msg); } catch (e) {} };
+const store = {
+  get(k, d) { try { const v = NATIVE ? (window.__STORE || {})[k] : localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { const s = JSON.stringify(v); if (NATIVE) { native({type: 'store', key: k, value: s}); return; } try { localStorage.setItem(k, s); } catch (e) {} },
+};
+let logs = store.get('studyradio.logs', []);
+let settings = Object.assign({launchAtLogin: false, logFolder: '~/Library/Application Support/Focus MN', version: ''}, window.__SETTINGS || {});
+// The panel sends the log here whenever it saves a session.
+window.__syncLogs = data => { logs = Array.isArray(data) ? data : []; renderAll(); };
+window.settingsChanged = s => { settings = Object.assign(settings, s); renderSettings(); };
+window.showTab = tab => setTab(tab);
+
+const pad = n => String(n).padStart(2, '0');
+const dur = ms => { const m = Math.round(ms / 60e3), h = Math.floor(m / 60); return h ? `${h}h ${m % 60}m` : `${m}m`; };
+const dayStart = d => { d = new Date(d); return +new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+const fmtDate = ts => new Date(ts).toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'});
+const fmtTime = ts => new Date(ts).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
+const isoDay = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+/* ---------- tabs and range ---------- */
+function setTab(tab) {
+  if (!['stats', 'sessions', 'settings'].includes(tab)) tab = 'stats';
+  $$('#tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === tab));
+  ['stats', 'sessions', 'settings'].forEach(id => $('#' + id).hidden = id !== tab);
+}
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
+const RANGES = [['today', 'Today'], ['7d', '7D'], ['30d', '30D'], ['all', 'All']];
+let range = '7d';
+$$('[data-range]').forEach(el => {
+  el.innerHTML = RANGES.map(([k, l]) => `<button type="button" data-r="${k}">${l}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('button'); if (b) { range = b.dataset.r; renderAll(); } };
+});
+function bounds() {
+  const today = dayStart(Date.now()), end = today + DAY;
+  if (range === 'today') return [today, end];
+  if (range === '7d') return [today - 6 * DAY, end];
+  if (range === '30d') return [today - 29 * DAY, end];
+  return [logs.length ? dayStart(Math.min(...logs.map(l => l.start))) : today - 6 * DAY, end];
+}
+function inRange() { const [a, b] = bounds(); return logs.filter(l => l.start >= a && l.start < b); }
+
+/* ---------- stats ---------- */
+function streak() {
+  const days = new Set(logs.map(l => dayStart(l.start)));
+  let d = dayStart(Date.now()); if (!days.has(d)) d -= DAY;
+  let n = 0; while (days.has(d)) { n++; d = dayStart(d - DAY / 2); }
+  return n;
+}
+// Buckets for the chart: hours for one day, days up to two months, months beyond that.
+function buckets(a, b) {
+  const span = Math.round((b - a) / DAY), out = [];
+  if (span <= 1) { for (let h = 0; h < 24; h++) out.push({s: a + h * 36e5, e: a + (h + 1) * 36e5, label: h % 6 === 0 ? `${h % 12 || 12}${h < 12 ? 'a' : 'p'}` : '', tip: `${pad(h)}:00`}); return {unit: 'hourly', out}; }
+  if (span <= 62) {
+    for (let d = a; d < b; d = dayStart(d + DAY * 1.5)) {
+      const dt = new Date(d);
+      out.push({s: d, e: dayStart(d + DAY * 1.5), label: span <= 7 ? dt.toLocaleDateString(undefined, {weekday: 'narrow'}) : (dt.getDate() % 5 === 1 ? String(dt.getDate()) : ''), tip: fmtDate(d)});
+    }
+    return {unit: 'daily', out};
+  }
+  for (let d = new Date(new Date(a).getFullYear(), new Date(a).getMonth(), 1); +d < b; d = new Date(d.getFullYear(), d.getMonth() + 1, 1))
+    out.push({s: +d, e: +new Date(d.getFullYear(), d.getMonth() + 1, 1), label: d.toLocaleDateString(undefined, {month: 'short'}), tip: d.toLocaleDateString(undefined, {month: 'long', year: 'numeric'})});
+  return {unit: 'monthly', out};
+}
+// A round top for the chart's scale: 15m, 30m, 45m, 1h, 2h ...
+function niceMax(ms) {
+  const steps = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 600, 900, 1200, 1800, 2400, 3600, 6000, 9000, 12000].map(m => m * 60e3);
+  return steps.find(s => s >= ms) || Math.ceil(ms / 36e6) * 36e6;
+}
+function renderStats() {
+  const list = inRange(), [a, b] = bounds(), total = list.reduce((n, l) => n + l.ms, 0);
+  const days = Math.max(1, Math.round((Math.min(b, dayStart(Date.now()) + DAY) - a) / DAY));
+  const byTopic = {}; list.forEach(l => byTopic[l.topic] = (byTopic[l.topic] || 0) + l.ms);
+  const topics = Object.entries(byTopic).sort((x, y) => y[1] - x[1]);
+  $('#cTime').textContent = dur(total);
+  $('#cTimeSub').textContent = range === 'today' ? 'today' : `${plural(days, 'day')} · ${dur(total / days)} a day`;
+  $('#cCount').textContent = list.length;
+  $('#cStreak').textContent = streak();
+  $('#cTop').textContent = topics[0] ? topics[0][0] : 'None'; $('#cTop').title = topics[0] ? topics[0][0] : '';
+  $('#cTopSub').textContent = topics[0] ? dur(topics[0][1]) : '';
+
+  const {unit, out} = buckets(a, b);
+  out.forEach(k => k.ms = list.filter(l => l.start >= k.s && l.start < k.e).reduce((n, l) => n + l.ms, 0));
+  const top = niceMax(Math.max(...out.map(k => k.ms), 0) || 1);
+  const ticks = [0, .25, .5, .75, 1];
+  // Short axis labels: 45m, 2h, 1.5h.
+  const axis = ms => { const m = Math.round(ms / 60e3); return m < 60 ? `${m}m` : m % 60 ? `${(m / 60).toFixed(1)}h` : `${m / 60}h`; };
+  $('#yax').innerHTML = ticks.map(t => `<span style="top:${(1 - t) * 100}%">${axis(top * t)}</span>`).join('');
+  $('#plot').querySelectorAll('.grid').forEach(g => g.remove());
+  ticks.slice(1).forEach(t => $('#plot').insertAdjacentHTML('afterbegin', `<div class="grid" style="top:${(1 - t) * 100}%"></div>`));
+  $('#bars').innerHTML = out.map(k => `<div data-tip="${esc(k.tip)} · ${dur(k.ms)}"><i style="height:${k.ms / top * 100}%"></i></div>`).join('');
+  $('#xax').innerHTML = out.map(k => `<span>${esc(k.label)}</span>`).join('');
+  $('#chartSub').textContent = `${dur(total)} across ${plural(days, 'day')} · ${unit}`;
+  $('#chartEmpty').hidden = list.length > 0;
+
+  const tmax = topics[0] ? topics[0][1] : 1;
+  $('#topicSub').textContent = plural(topics.length, 'topic');
+  $('#topics').innerHTML = topics.length ? topics.slice(0, 8).map(([t, ms]) =>
+    `<div class="trow"><span class="n" title="${esc(t)}">${esc(t)}</span><span class="track"><i style="width:${ms / tmax * 100}%"></i></span><span class="h">${dur(ms)}</span></div>`).join('')
+    : '<div class="empty">Topics show up here once you log a session.</div>';
+
+  // Focus minutes by hour of day: each session's time is spread across the hours it covered.
+  const hrs = Array(24).fill(0);
+  list.forEach(l => { let t = l.start; const end = l.start + l.ms; while (t < end) { const h = new Date(t).getHours(), next = Math.min(end, dayStart(t) + (h + 1) * 36e5); hrs[h] += next - t; t = next; } });
+  const hmax = Math.max(...hrs) || 1;
+  $('#hours').innerHTML = hrs.map((ms, h) => `<div title="${pad(h)}:00 · ${dur(ms)}"><i style="height:${Math.max(ms ? 4 : 0, ms / hmax * 100)}%"></i></div>`).join('');
+}
+
+/* ---------- sessions ---------- */
+function renderSessions() {
+  const sel = $('#topicSel'), cur = sel.value;
+  const all = [...new Set(logs.map(l => l.topic))].sort((x, y) => x.localeCompare(y));
+  sel.innerHTML = '<option value="">All topics</option>' + all.map(t => `<option${t === cur ? ' selected' : ''}>${esc(t)}</option>`).join('');
+  const list = inRange().filter(l => !sel.value || l.topic === sel.value).sort((x, y) => y.start - x.start).slice(0, 500);
+  $('#rows').innerHTML = list.map(l => `<tr><td>${fmtDate(l.start)}</td><td>${fmtTime(l.start)} – ${fmtTime(l.end)}</td><td class="t" title="${esc(l.topic)}">${esc(l.topic)}</td><td>${dur(l.ms)}</td><td class="x"><button class="del" data-id="${l.id}" title="Delete" type="button">×</button></td></tr>`).join('')
+    || '<tr><td colspan="5" class="empty">Nothing logged in this range.</td></tr>';
+}
+$('#topicSel').onchange = renderSessions;
+$('#rows').onclick = e => {
+  const b = e.target.closest('.del'); if (!b) return;
+  const i = logs.findIndex(l => l.id === b.dataset.id); if (i < 0) return;
+  const [gone] = logs.splice(i, 1); store.set('studyradio.logs', logs); renderAll();
+  toast(`Deleted ${gone.topic} (${dur(gone.ms)})`, () => { logs.splice(i, 0, gone); store.set('studyradio.logs', logs); renderAll(); });
+};
+let toastT;
+function toast(text, undo) {
+  const el = $('#toast');
+  el.innerHTML = `<span>${esc(text)}</span>` + (undo ? '<button type="button">Undo</button>' : '');
+  if (undo) el.querySelector('button').onclick = () => { undo(); el.hidden = true; };
+  el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 5000);
+}
+$('#copyToday').onclick = async () => {
+  const a = dayStart(Date.now()), ms = logs.filter(l => l.start >= a).reduce((n, l) => n + l.ms, 0);
+  const hours = String(Math.round(ms / 36e5 * 4) / 4);
+  if (NATIVE) native({type: 'copy', text: hours}); else try { await navigator.clipboard.writeText(hours); } catch (e) {}
+  toast(`Copied ${hours} h (${dur(ms)} today)`);
+};
+$$('[data-export]').forEach(b => b.onclick = () => {
+  const rows = [['date', 'start', 'end', 'minutes', 'topic'], ...logs.map(l => [isoDay(l.start), fmtTime(l.start), fmtTime(l.end), Math.round(l.ms / 60e3), '"' + l.topic.replace(/"/g, '""') + '"'])];
+  const text = rows.map(r => r.join(',')).join('\n');
+  if (NATIVE) { native({type: 'csv', text}); toast('Saved Study Log.csv in the log folder'); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'})); a.download = `focus-log-${isoDay(Date.now())}.csv`; a.click();
+});
+
+/* ---------- settings ---------- */
+function renderSettings() {
+  $('#loginSw').setAttribute('aria-checked', !!settings.launchAtLogin);
+  $('#folder').textContent = settings.logFolder;
+  $('#ver').textContent = settings.version;
+}
+$('#loginSw').onclick = () => native({type: 'setLaunchAtLogin', on: !settings.launchAtLogin});
+$('#chooseFolder').onclick = () => native({type: 'chooseLogFolder'});
+$('#reveal').onclick = () => native({type: 'revealLogFolder'});
+$('#updates').onclick = () => native({type: 'checkUpdates'});
+
+function renderAll() {
+  $$('[data-range] button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r === range));
+  renderStats(); renderSessions(); renderSettings();
+}
+// ?demo fills the dashboard with two weeks of sample sessions, for screenshots.
+if (new URLSearchParams(location.search).has('demo')) {
+  const topics = ['AWS AI Practitioner', 'Linear algebra', 'System design', 'Security+ notes', 'Reading'];
+  let seed = 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  logs = [];
+  for (let d = 13; d >= 0; d--) {
+    const n = d === 0 ? 2 : Math.floor(r() * 4) + (d % 6 === 0 ? 0 : 1);
+    for (let i = 0; i < n; i++) {
+      const start = dayStart(Date.now() - d * DAY) + (8 + Math.floor(r() * 12)) * 36e5 + Math.floor(r() * 50) * 6e4, ms = [20, 40, 40, 60][Math.floor(r() * 4)] * 6e4;
+      logs.push({id: d + '-' + i, start, end: start + ms, ms, topic: topics[Math.floor(r() * topics.length)]});
+    }
+  }
+  settings.version = '2.0';
+}
+setTab(new URLSearchParams(location.search).get('tab') || window.__TAB || 'stats');
+renderAll();
+</script>
+</body>
+</html>

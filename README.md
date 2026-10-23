@@ -1,28 +1,36 @@
 # Focus MN
 
-A small floating study radio for macOS: a focus timer with Pomodoro, lofi live streams from YouTube, a study log, and a few retro skins. It sits above your other windows, and most controls also live in the menu bar.
+A focus timer and lofi radio that lives in your Mac's menu bar. Click the time in the menu bar to open the timer: Pomodoro or count-up, a live lofi station, and today's focus at a glance. Every session is logged by topic, and a dashboard shows where your time went.
 
 **[Download Focus MN for macOS](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip)** (macOS 13 or later, see [Install](#install))
 
 <p>
-  <img src="docs/screenshots/walnut.png" width="32%" alt="Walnut radio skin showing a running focus timer">
-  <img src="docs/screenshots/gameboy.png" width="32%" alt="FOCUS MN Pocket skin, styled like a handheld console">
-  <img src="docs/screenshots/classic-dark.png" width="32%" alt="FOCUS MN Classic Dark skin, styled like a compact Mac">
+  <img src="docs/screenshots/panel-focus.png" width="32%" alt="The menu bar panel while focusing: time left, progress, the radio, Pause and Stop, and today's stats">
+  <img src="docs/screenshots/panel-idle.png" width="32%" alt="The panel when idle: pick Count up, 20, 40 or 60 minutes and start">
+  <img src="docs/screenshots/panel-break.png" width="32%" alt="The panel in dark mode during a short break">
+</p>
+
+<p>
+  <img src="docs/screenshots/dashboard.png" width="100%" alt="The dashboard: focus time, sessions, streak, top topic, a focused-time chart, topics and best hours">
 </p>
 
 ## Features
 
-- **Timer:** count up, or Pomodoro blocks of 20, 40 or 60 minutes with 5 or 10 minute breaks. When a block ends you get a chime and a notification, then the widget asks what the session was and whether to take a break.
-- **Radio:** ten lofi live streams (Lofi Girl, Chillhop and others). Pick a station on the widget or from the menu bar. When a stream's ID changes, the app finds the current one.
-- **Study log:** every session over a minute is logged by topic. Open Logs shows totals by day, week, month or a custom range, and can export to CSV.
-- **Skins:** Walnut, Mint, Midnight, Cherry, FOCUS MN Pocket, FOCUS MN Classic and FOCUS MN Recorder, some with dark versions. Four sizes (XXS, XS, Small, Medium); XXS is a tiny layout for Classic and Recorder, and the other skins show their XS layout there.
-- **Menu bar:** start, pause and stop, the running time next to the icon, station, timer mode, size, skin and Keep on Top.
+- **Lives in the menu bar.** The running time sits next to a timer icon, with a filling circle (◔ ◑ ◕) for Pomodoro blocks. Click it to open the panel; click anywhere else to close it.
+- **Timer:** count up, or Pomodoro blocks of 20, 40 or 60 minutes with a 5 or 10 minute break. When a block ends you get a chime and a notification, and the panel opens to ask what the session was, then whether to take the break.
+- **Radio:** ten lofi live streams (Lofi Girl, Chillhop and others), with previous, play/pause, next and volume right in the panel. It keeps playing when the panel is closed.
+- **Study log:** every session over a minute is saved with its topic. Recent topics are one click away.
+- **Dashboard:** focus time, sessions, streak and top topic for today, 7 days, 30 days or all time; a focused-time chart; time by topic; the hours you focus best; and a full session list you can tidy up. Export to CSV, or copy today's hours.
+- **Shortcut:** ⌃⌥Space (Control-Option-Space) starts or pauses the timer from any app.
+- **Open at login**, light and dark mode, and an update notice when a new version is out.
+
+<p>
+  <img src="docs/screenshots/panel-ask.png" width="32%" alt="The panel asking What was this session?, with recent topics as buttons">
+</p>
 
 ## Install
 
-Needs macOS 13 or later.
-
-1. [Download `Focus-MN.zip`](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip) (or pick a version on the [Releases](../../releases) page) and unzip it.
+1. [Download `Focus-MN.zip`](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip) and unzip it.
 2. Move `Focus MN.app` to your Applications folder.
 3. The app isn't notarized by Apple, so the first time, right-click it and choose **Open**, then **Open** again. If macOS still refuses, run this once:
 
@@ -30,67 +38,36 @@ Needs macOS 13 or later.
    xattr -cr "/Applications/Focus MN.app"
    ```
 
-Focus MN has no Dock icon. Look for the radio icon in the menu bar.
+Focus MN has no Dock icon: look for the timer icon in the menu bar. Right-click it for a small menu (Open Log, Settings, Check for Updates, Quit).
 
 ## Updates
 
-Focus MN checks GitHub for a new release when it opens and once a day. When there is one, you get a notification and an **Update Available** item at the top of the menu bar menu; either opens the download page. You can also choose **Check for Updates…** from the menu. Versions before 1.2 don't check, so if you have 1.0 or 1.1, download the latest once by hand.
+Focus MN checks for a new release when it opens and once a day, and tells you with a notification. **Check for Updates…** is in the right-click menu and in Settings. To update, quit Focus MN, replace the app in Applications and open it again. Your log and settings are kept.
 
-To update, quit Focus MN, replace `Focus MN.app` in Applications with the new one, and open it. To hear about new versions by email instead, click **Watch → Custom → Releases** on this repository.
+## Where your data lives
 
-The check is a single request to GitHub's public API. It sends nothing about you or your sessions.
+Everything is in `~/Library/Application Support/Focus MN/`:
 
-**Your log and settings are kept** when you update, or even if you delete the app and install it again. They live in `~/Library/Application Support/Focus MN/`, not inside the app. They're only lost if you delete that folder, or use an uninstaller that removes an app's support files (such as AppCleaner).
+- `Study Log.json`: your sessions
+- `studyradio.state.json`: timer mode, station, volume
+
+To keep the log somewhere else, such as a synced notes folder, choose a folder in **Settings → Your log**. Your current log is copied there if the folder doesn't have one yet.
+
+## About the YouTube streams
+
+The radio plays public YouTube live streams through YouTube's official embedded player, shown small as the station art, and finds each stream's current ID by reading the channel's public Live page. It's a personal project, not affiliated with YouTube or the channels. The small player doesn't follow YouTube's size guidelines, and the stream lookup can break when YouTube changes its pages. All music belongs to its creators.
 
 ## Build from source
 
 Needs the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
-git clone <this repo's URL>
+git clone https://github.com/manojitnath/focus-mn.git
 cd focus-mn
 ./build.sh --install
 ```
 
-This builds the app and copies it to `/Applications`. Without `--install` the app stays in `build.noindex/`, a folder Spotlight doesn't search, so you never see two copies. `./build.sh --zip` also makes `build.noindex/Focus-MN.zip` for a release. An app you build yourself doesn't get the warning above.
-
-## Where your data lives
-
-Everything is stored in `~/Library/Application Support/Focus MN/`:
-
-- `Study Log.json`: your sessions
-- `studyradio.state.json`: timer, skin, station, size and volume
-
-To keep the log somewhere else, such as a synced notes folder, set the folder and restart the app:
-
-```bash
-defaults write local.focusmn.app LogFolder "~/Documents/Notes/Study"
-```
-
-To go back to the default folder, run `defaults delete local.focusmn.app LogFolder`.
-
-## About the YouTube streams
-
-Focus MN plays public YouTube live streams through YouTube's official embedded player, and finds each stream's current ID by reading the channel's public Live page. This is a personal hobby project and isn't affiliated with YouTube or any of the channels. Two things to know:
-
-- The player is smaller than YouTube's recommended minimum size, and the timer is drawn over the video. That doesn't follow YouTube's embed guidelines.
-- The stream lookup depends on how YouTube's pages are built, so it can break when YouTube changes them.
-
-All music belongs to its creators. If you enjoy a station, go support the channel.
-
-## Use it in a browser
-
-`src/widget.html` also runs in a browser, where data is kept in the browser's local storage. YouTube refuses to play from `file://` pages, so serve it:
-
-```bash
-python3 -m http.server 8765 --directory src
-```
-
-Then open http://127.0.0.1:8765/widget.html.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how the app fits together, the design rules and known pitfalls.
+This builds the app and copies it to `/Applications`. `./build.sh --zip` also makes `build.noindex/Focus-MN.zip` for a release. See [CONTRIBUTING.md](CONTRIBUTING.md) for how it fits together.
 
 ## License
 

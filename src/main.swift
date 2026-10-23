@@ -1,60 +1,40 @@
-// Focus MN: a floating desktop widget that hosts widget.html.
+// Focus MN: a focus timer and lofi radio in the menu bar.
+// Clicking the menu bar time opens a panel (panel.html); Open Log and Settings open the dashboard (dashboard.html).
 // The study log and the timer and radio settings are saved in ~/Library/Application Support/Focus MN.
-// To keep the log somewhere else (a synced notes folder, say):
+// To keep the log somewhere else, choose a folder in Settings, or:
 //   defaults write local.focusmn.app LogFolder ~/path/to/folder
 import Cocoa
 import WebKit
 import UserNotifications
+import ServiceManagement
+import Carbon
 
-final class RadioWindow: NSWindow {
+// A borderless window that can still take typing (for the session topic).
+final class PanelWindow: NSWindow {
     override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
+    override var canBecomeMain: Bool { false }
 }
 
-// Invisible layer over the page: a press on any plain part of the radio drags the window,
-// while presses on controls (whose rects the page reports) fall through to the page.
-final class DragLayer: NSView {
-    var controlRects: [CGRect] = []   // in page coordinates (top-left origin)
-    var passAll = false               // true while a dialog, the station list or the log is open
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        guard let superview else { return nil }
-        let p = convert(point, from: superview)
-        guard bounds.contains(p) else { return nil }
-        if passAll { return nil }
-        let pagePoint = CGPoint(x: p.x, y: isFlipped ? p.y : bounds.height - p.y)
-        return controlRects.contains { $0.insetBy(dx: -3, dy: -3).contains(pagePoint) } ? nil : self
-    }
-    override func mouseDown(with event: NSEvent) {
-        window?.performDrag(with: event)
-        // Keep keyboard focus on the page so Space still starts and pauses.
-        if let web = superview?.subviews.first(where: { $0 is WKWebView }) { window?.makeFirstResponder(web) }
-    }
-}
-
-final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, UNUserNotificationCenterDelegate {
-    var window: RadioWindow!
-    var web: WKWebView!
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandler, UNUserNotificationCenterDelegate {
     var statusItem: NSStatusItem!
-    var onTopItem: NSMenuItem!
-    var dragLayer: DragLayer!
-    var logsWindow: NSWindow?
-    var logsWeb: WKWebView?
-    var timerItems: [NSMenuItem] = []
-    var startItem: NSMenuItem!
-    var skinItems: [NSMenuItem] = []
-    var stationMenu = NSMenu()
-    var radioItem: NSMenuItem!
-    var stopItem: NSMenuItem!
+    var panel: PanelWindow!
+    var web: WKWebView!
+    var dashWindow: NSWindow?
+    var dashWeb: WKWebView?
+    var rightMenu = NSMenu()
     var updateItem: NSMenuItem?
-    var topicPanel: NSWindow?
-    var topicWeb: WKWebView?
     var updateURL: URL?
+    var panelHeight: CGFloat = 520
+    var lastHidden = Date.distantPast
+    var hotKeyRef: EventHotKeyRef?
+    let panelWidth: CGFloat = 320
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     lazy var stateDir = supportDir.appendingPathComponent("Focus MN")
     var logDir: URL {
         guard let folder = UserDefaults.standard.string(forKey: "LogFolder"), !folder.isEmpty else { return stateDir }
         return URL(fileURLWithPath: (folder as NSString).expandingTildeInPath, isDirectory: true)
     }
+    var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0" }
 
     func fileURL(for key: String) -> URL {
         key == "studyradio.logs"
@@ -78,43 +58,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         try? FileManager.default.createDirectory(at: stateDir, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
         buildMainMenu()
-
-        let config = pageConfig(logsWindow: false)
-
-        window = RadioWindow(contentRect: NSRect(x: 0, y: 0, width: 535, height: 470),
-                             styleMask: [.borderless, .resizable], backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.level = .floating
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.isReleasedWhenClosed = false
-
-        let root = window.contentView!
-        web = WKWebView(frame: root.bounds, configuration: config)
-        web.autoresizingMask = [.width, .height]
-        web.setValue(false, forKey: "drawsBackground")
-        root.addSubview(web)
-
-        dragLayer = DragLayer(frame: root.bounds)
-        dragLayer.autoresizingMask = [.width, .height]
-        dragLayer.passAll = true
-        root.addSubview(dragLayer)
-
-        loadPage(into: web)
-
-        if !window.setFrameUsingName("StudyRadioWindow") { window.center() }
-        window.setFrameAutosaveName("StudyRadioWindow")
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        buildPanel()
         buildStatusItem()
+        registerHotKey()
         // Look for a newer release now and once a day.
         checkForUpdate()
         Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.checkForUpdate() }
     }
 
-    // Both windows run the same page. The saved data is handed to it before its script runs.
-    func pageConfig(logsWindow: Bool, topic: [String: Any]? = nil) -> WKWebViewConfiguration {
+    // MARK: pages
+
+    // Both pages get the saved data before their script runs; the dashboard also gets its settings and first tab.
+    func pageConfig(extra: String = "") -> WKWebViewConfiguration {
         var saved: [String: String] = [:]
         for key in ["studyradio.logs", "studyradio.state"] {
             if let text = try? String(contentsOf: fileURL(for: key), encoding: .utf8) { saved[key] = text }
@@ -122,8 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let json = String(data: try! JSONSerialization.data(withJSONObject: saved), encoding: .utf8)!
         let content = WKUserContentController()
         content.add(self, name: "native")
-        let topicJSON = topic.flatMap { try? JSONSerialization.data(withJSONObject: $0) }.flatMap { String(data: $0, encoding: .utf8) } ?? "null"
-        content.addUserScript(WKUserScript(source: "window.__NATIVE = true; window.__LOGS_WINDOW = \(logsWindow); window.__TOPIC_WINDOW = \(topic != nil); window.__TOPIC = \(topicJSON); window.__STORE = \(json);",
+        content.addUserScript(WKUserScript(source: "window.__NATIVE = true; window.__STORE = \(json); \(extra)",
                                            injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let config = WKWebViewConfiguration()
         config.userContentController = content
@@ -131,60 +85,121 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return config
     }
 
-    func loadPage(into view: WKWebView) {
-        let html = Bundle.main.url(forResource: "widget", withExtension: "html")!
+    func loadPage(_ name: String, into view: WKWebView) {
+        let html = Bundle.main.url(forResource: name, withExtension: "html")!
         // Served from a web address rather than a file, because YouTube's player refuses to run inside file pages.
         let page = (try? String(contentsOf: html, encoding: .utf8)) ?? ""
         view.loadHTMLString(page, baseURL: URL(string: "https://localhost/"))
     }
 
+    func json(_ object: Any) -> String {
+        String(data: (try? JSONSerialization.data(withJSONObject: object, options: .fragmentsAllowed)) ?? Data("null".utf8), encoding: .utf8) ?? "null"
+    }
+
+    // MARK: the panel
+
+    // A frosted, rounded window that drops down from the menu bar time. It stays alive while hidden,
+    // so the timer keeps ticking and the radio keeps playing.
+    func buildPanel() {
+        panel = PanelWindow(contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight),
+                            styleMask: [.borderless], backing: .buffered, defer: false)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .statusBar
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
+        panel.isReleasedWhenClosed = false
+        panel.delegate = self
+
+        let blur = NSVisualEffectView(frame: panel.contentView!.bounds)
+        blur.autoresizingMask = [.width, .height]
+        blur.material = .popover
+        blur.blendingMode = .behindWindow
+        blur.state = .active
+        blur.wantsLayer = true
+        blur.layer?.cornerRadius = 14
+        blur.layer?.masksToBounds = true
+        panel.contentView = blur
+
+        web = WKWebView(frame: blur.bounds, configuration: pageConfig())
+        web.autoresizingMask = [.width, .height]
+        web.setValue(false, forKey: "drawsBackground")
+        blur.addSubview(web)
+        loadPage("panel", into: web)
+        // Off screen until first opened; the page runs from the start so the timer and radio work.
+        panel.setFrameOrigin(NSPoint(x: -10000, y: -10000))
+        panel.orderFront(nil)
+        panel.orderOut(nil)
+    }
+
+    // Under the menu bar time, kept on screen.
+    func placePanel() {
+        guard let button = statusItem.button, let bw = button.window else { return }
+        let b = bw.convertToScreen(button.convert(button.bounds, to: nil))
+        var x = b.midX - panelWidth / 2
+        if let visible = (bw.screen ?? NSScreen.main)?.visibleFrame {
+            x = min(max(x, visible.minX + 8), visible.maxX - panelWidth - 8)
+        }
+        panel.setFrame(NSRect(x: x, y: b.minY - 6 - panelHeight, width: panelWidth, height: panelHeight), display: true)
+    }
+
+    func showPanel() {
+        placePanel()
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+        statusItem.button?.highlight(true)
+    }
+
+    func hidePanel() {
+        guard panel.isVisible else { return }
+        panel.orderOut(nil)
+        lastHidden = Date()
+        statusItem.button?.highlight(false)
+    }
+
+    // Clicking anywhere else closes the panel, like a menu.
+    func windowDidResignKey(_ notification: Notification) {
+        if (notification.object as? NSWindow) === panel { hidePanel() }
+    }
+
+    @objc func togglePanel() {
+        // A click on the menu bar time first takes focus from the panel, which hides it; don't reopen it straight away.
+        if panel.isVisible { hidePanel(); return }
+        if Date().timeIntervalSince(lastHidden) < 0.3 { return }
+        showPanel()
+    }
+
+    // MARK: messages from the pages
+
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
-        // The topic window only answers the question.
-        if topicWeb != nil && message.webView === topicWeb {
-            if type == "topicSize", let h = body["h"] as? Double, h.isFinite, h >= 120, h <= 900 { placeTopicPanel(height: CGFloat(h)) }
-            if type == "topicDone" { finishTopic(body) }
-            return
-        }
-        let fromLogs = logsWeb != nil && message.webView === logsWeb
-        // Only the widget may move, resize or retitle the widget.
-        if fromLogs && ["resize", "hit", "mode", "status", "skin", "clock", "notify", "stations", "station", "askTopic"].contains(type) { return }
+        let fromDash = dashWeb != nil && message.webView === dashWeb
         switch type {
         case "store":
             if let key = body["key"] as? String, let value = body["value"] as? String {
-                if fromLogs && key != "studyradio.logs" { return }
+                if fromDash && key != "studyradio.logs" { return }
                 try? value.write(to: fileURL(for: key), atomically: true, encoding: .utf8)
-                // Keep the other window's copy of the log in step.
+                // Keep the other page's copy of the log in step.
                 if key == "studyradio.logs" {
-                    let other = fromLogs ? web : logsWeb
-                    other?.evaluateJavaScript("window.__syncLogs && __syncLogs(\(value))")
+                    (fromDash ? web : dashWeb)?.evaluateJavaScript("window.__syncLogs && __syncLogs(\(value))")
                 }
             }
-        case "askTopic":
-            if let pending = body["pending"] as? [String: Any] { askTopic(pending: pending) }
-        case "closeLogs":
-            logsWindow?.orderOut(nil)
         case "resize":
-            if let w = body["w"] as? Double, let h = body["h"] as? Double,
-               w.isFinite, h.isFinite, w >= 120, h >= 120, w <= 3000, h <= 3000 {
-                let lock = body["lock"] as? Bool ?? false
-                // The radio keeps its shape when you drag a corner; the log window resizes freely.
-                if lock {
-                    window.contentAspectRatio = NSSize(width: w, height: h)
-                    // XXS windows are narrower than the usual 220 minimum.
-                    window.minSize = NSSize(width: min(220, w), height: min(220, w) * h / w)
-                    window.maxSize = NSSize(width: 600, height: 600 * h / w)
-                } else {
-                    window.resizeIncrements = NSSize(width: 1, height: 1)
-                    window.minSize = NSSize(width: 600, height: 450)
-                    window.maxSize = NSSize(width: 2000, height: 2000)
-                }
-                resize(CGFloat(w), CGFloat(h))
+            if !fromDash, let h = body["h"] as? Double, h.isFinite, h >= 200, h <= 1200 {
+                panelHeight = CGFloat(h)
+                if panel.isVisible { placePanel() } else { panel.setContentSize(NSSize(width: panelWidth, height: panelHeight)) }
             }
-        case "hit":
-            dragLayer.passAll = body["all"] as? Bool ?? false
-            let rects = body["rects"] as? [[Double]] ?? []
-            dragLayer.controlRects = rects.filter { $0.count == 4 }.map { CGRect(x: $0[0], y: $0[1], width: $0[2], height: $0[3]) }
+        case "clock":
+            // Running timer next to the menu bar icon; empty when no session is going.
+            let text = body["text"] as? String ?? ""
+            statusItem.button?.title = text.isEmpty ? "" : " " + text
+        case "showPanel":
+            if !fromDash { showPanel() }
+        case "hidePanel":
+            hidePanel()
+        case "notify":
+            notify(title: body["title"] as? String ?? "Focus MN", body: body["body"] as? String ?? "")
+            if body["show"] as? Bool ?? false { showPanel() }
         case "resolve":
             if let i = body["i"] as? Int, let channel = body["ch"] as? String, let match = body["match"] as? [String] {
                 findLiveStream(channel: channel, match: match) { [weak self] id in
@@ -192,42 +207,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                     self?.web.evaluateJavaScript("ytResolved(\(i), '\(id)')")
                 }
             }
-        case "notify":
-            notify(title: body["title"] as? String ?? "Focus MN", body: body["body"] as? String ?? "")
-            // Bring a hidden widget back so its questions can be answered.
-            if body["show"] as? Bool ?? false { showWindow() }
-        case "clock":
-            // Running timer next to the menu bar icon; empty when no session is going.
-            let text = body["text"] as? String ?? ""
-            statusItem.button?.title = text.isEmpty ? "" : " " + text
-        case "skin":
-            // Tick the skin that is showing.
-            let id = body["id"] as? String ?? ""
-            for item in skinItems { item.state = (item.representedObject as? String) == id ? .on : .off }
-        case "status":
-            // The first menu item follows the timer: Start, Pause or Resume.
-            let status = body["status"] as? String ?? "idle"
-            startItem.title = status == "running" ? "Pause" : status == "paused" ? "Resume" : "Start"
-            stopItem.isEnabled = status != "idle"
-        case "stations":
-            // The page sends its station list once, so the menu never goes out of step with it.
-            let names = body["names"] as? [String] ?? []
-            while stationMenu.items.count > 2 { stationMenu.removeItem(at: 2) }
-            for (i, name) in names.enumerated() {
-                let item = NSMenuItem(title: name, action: #selector(playStation(_:)), keyEquivalent: "")
-                item.tag = i
-                item.target = self
-                stationMenu.addItem(item)
-            }
-        case "station":
-            // Tick the current station; the first item turns the radio on or off.
-            let i = body["i"] as? Int ?? -1, on = body["on"] as? Bool ?? false
-            radioItem.title = on ? "Radio Off" : "Radio On"
-            for item in stationMenu.items.dropFirst(2) { item.state = item.tag == i ? (on ? .on : .mixed) : .off }
-        case "mode":
-            let mode = body["mode"] as? String ?? "free"
-            let minutes = body["min"] as? Int ?? 20
-            for item in timerItems { item.state = (mode == "free" ? item.tag == 0 : item.tag == minutes) ? .on : .off }
+        case "openDashboard":
+            openDashboard(tab: body["tab"] as? String ?? "stats")
+        case "quit":
+            NSApp.terminate(nil)
         case "copy":
             if let text = body["text"] as? String {
                 NSPasteboard.general.clearContents()
@@ -239,9 +222,189 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 try? text.write(to: url, atomically: true, encoding: .utf8)
                 NSWorkspace.shared.activateFileViewerSelecting([url])
             }
+        case "setLaunchAtLogin":
+            setLaunchAtLogin(body["on"] as? Bool ?? false)
+        case "chooseLogFolder":
+            chooseLogFolder()
+        case "revealLogFolder":
+            NSWorkspace.shared.activateFileViewerSelecting([fileURL(for: "studyradio.logs")])
+        case "checkUpdates":
+            checkForUpdate(manual: true)
         default:
             break
         }
+    }
+
+    // MARK: the dashboard
+
+    func settingsJSON() -> String {
+        json(["launchAtLogin": SMAppService.mainApp.status == .enabled,
+              "logFolder": (logDir.path as NSString).abbreviatingWithTildeInPath,
+              "version": version])
+    }
+
+    @objc func openDashboard(tab: String = "stats") {
+        hidePanel()
+        if let window = dashWindow, let view = dashWeb {
+            if let text = try? String(contentsOf: fileURL(for: "studyradio.logs"), encoding: .utf8) {
+                view.evaluateJavaScript("window.__syncLogs && __syncLogs(\(text))")
+            }
+            view.evaluateJavaScript("settingsChanged(\(settingsJSON())); showTab(\(json(tab)))")
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 760),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                              backing: .buffered, defer: false)
+        window.title = "Focus MN"
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 640, height: 520)
+        let view = WKWebView(frame: window.contentView!.bounds,
+                             configuration: pageConfig(extra: "window.__SETTINGS = \(settingsJSON()); window.__TAB = \(json(tab));"))
+        view.autoresizingMask = [.width, .height]
+        view.setValue(false, forKey: "drawsBackground")
+        window.contentView!.addSubview(view)
+        loadPage("dashboard", into: view)
+        dashWeb = view
+        dashWindow = window
+        if !window.setFrameUsingName("FocusMNDashboard") { window.center() }
+        window.setFrameAutosaveName("FocusMNDashboard")
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    @objc func openLog() { openDashboard(tab: "stats") }
+    @objc func openSettings() { openDashboard(tab: "settings") }
+
+    func setLaunchAtLogin(_ on: Bool) {
+        do {
+            if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+        } catch {
+            notify(title: "Couldn't change Open at Login", body: error.localizedDescription)
+        }
+        dashWeb?.evaluateJavaScript("settingsChanged(\(settingsJSON()))")
+    }
+
+    // A new log folder gets a copy of the current log if it doesn't have one yet.
+    func chooseLogFolder() {
+        let open = NSOpenPanel()
+        open.canChooseDirectories = true
+        open.canChooseFiles = false
+        open.canCreateDirectories = true
+        open.prompt = "Use This Folder"
+        open.message = "Choose where Focus MN keeps Study Log.json"
+        NSApp.activate(ignoringOtherApps: true)
+        guard open.runModal() == .OK, let folder = open.url else { return }
+        let current = fileURL(for: "studyradio.logs")
+        let target = folder.appendingPathComponent("Study Log.json")
+        if !FileManager.default.fileExists(atPath: target.path), let data = try? Data(contentsOf: current) {
+            try? data.write(to: target)
+        }
+        UserDefaults.standard.set(folder.path, forKey: "LogFolder")
+        if let text = try? String(contentsOf: target, encoding: .utf8) {
+            web.evaluateJavaScript("window.__syncLogs && __syncLogs(\(text))")
+            dashWeb?.evaluateJavaScript("window.__syncLogs && __syncLogs(\(text))")
+        }
+        dashWeb?.evaluateJavaScript("settingsChanged(\(settingsJSON()))")
+    }
+
+    // MARK: menu bar
+
+    // Click opens the panel; right-click (or Control-click) shows a small menu.
+    func buildStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Focus MN")
+        statusItem.button?.imagePosition = .imageLeft
+        statusItem.button?.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(statusClicked)
+        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+
+        rightMenu.addItem(NSMenuItem(title: "Open Focus MN", action: #selector(togglePanel), keyEquivalent: ""))
+        rightMenu.addItem(NSMenuItem(title: "Open Log", action: #selector(openLog), keyEquivalent: ""))
+        rightMenu.addItem(NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ","))
+        rightMenu.addItem(.separator())
+        rightMenu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesNow), keyEquivalent: ""))
+        rightMenu.items.forEach { $0.target = self }
+        rightMenu.addItem(NSMenuItem(title: "Quit Focus MN", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+    }
+
+    @objc func statusClicked() {
+        let event = NSApp.currentEvent
+        if event?.type == .rightMouseUp || event?.modifierFlags.contains(.control) == true {
+            hidePanel()
+            statusItem.menu = rightMenu
+            statusItem.button?.performClick(nil)
+            statusItem.menu = nil
+        } else {
+            togglePanel()
+        }
+    }
+
+    // An Edit menu so copy and paste work in the topic field.
+    func buildMainMenu() {
+        let main = NSMenu()
+        let appItem = NSMenuItem(), editItem = NSMenuItem()
+        main.addItem(appItem)
+        main.addItem(editItem)
+        let appMenu = NSMenu()
+        appMenu.addItem(NSMenuItem(title: "Quit Focus MN", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        appItem.submenu = appMenu
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+        edit.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        edit.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        edit.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        edit.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        editItem.submenu = edit
+        NSApp.mainMenu = main
+    }
+
+    // Control-Option-Space starts or pauses the timer from any app. (Option-Command-Space is Finder's search.)
+    func registerHotKey() {
+        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), { _, _, context in
+            guard let context else { return noErr }
+            let me = Unmanaged<AppDelegate>.fromOpaque(context).takeUnretainedValue()
+            DispatchQueue.main.async { me.web.evaluateJavaScript("start()") }
+            return noErr
+        }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), nil)
+        let id = EventHotKeyID(signature: OSType(0x464D4E31), id: 1)
+        RegisterEventHotKey(UInt32(kVK_Space), UInt32(controlKey | optionKey), id, GetApplicationEventTarget(), 0, &hotKeyRef)
+    }
+
+    // MARK: notifications
+
+    func setUpNotifications() {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    func notify(title: String, body: String, url: URL? = nil) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        if let url { content.userInfo = ["url": url.absoluteString] }
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+    }
+
+    // Show banners even while Focus MN is the active app.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list])
+    }
+
+    // Clicking an update notice opens the download page; any other opens the panel.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        if let link = response.notification.request.content.userInfo["url"] as? String, let url = URL(string: link) {
+            NSWorkspace.shared.open(url)
+        } else {
+            showPanel()
+        }
+        completionHandler()
     }
 
     // Reads a channel's Live tab and returns the live stream whose title contains every match phrase.
@@ -281,84 +444,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }.resume()
     }
 
-    // macOS notifications: a heads-up only; the widget asks the questions.
-    func setUpNotifications() {
-        let center = UNUserNotificationCenter.current()
-        center.delegate = self
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
-    }
-
-    func notify(title: String, body: String, url: URL? = nil) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        if let url { content.userInfo = ["url": url.absoluteString] }
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
-    }
-
-    // Show banners even while Focus MN is the active app.
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .list])
-    }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
-                                withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Clicking an update notice opens the download page; any other brings up the widget.
-        if let link = response.notification.request.content.userInfo["url"] as? String, let url = URL(string: link) {
-            NSWorkspace.shared.open(url)
-        } else {
-            showWindow()
-        }
-        completionHandler()
-    }
-
-    // "What was this session?" pops out over the widget: the same page in a clear window showing only the card,
-    // so it stays full size whatever size the widget is. Its answer goes back to the widget, which saves it.
-    func askTopic(pending: [String: Any]) {
-        topicPanel?.close()
-        let panel = RadioWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 280), styleMask: [.borderless], backing: .buffered, defer: false)
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = false
-        panel.level = .floating
-        panel.isReleasedWhenClosed = false
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        let view = WKWebView(frame: panel.contentView!.bounds, configuration: pageConfig(logsWindow: false, topic: pending))
-        view.autoresizingMask = [.width, .height]
-        view.setValue(false, forKey: "drawsBackground")
-        panel.contentView!.addSubview(view)
-        loadPage(into: view)
-        topicPanel = panel
-        topicWeb = view
-        placeTopicPanel(height: 280)
-        NSApp.activate(ignoringOtherApps: true)
-        panel.makeKeyAndOrderFront(nil)
-    }
-
-    // Centred on the widget, kept on screen.
-    func placeTopicPanel(height: CGFloat) {
-        guard let panel = topicPanel else { return }
-        var frame = NSRect(x: window.frame.midX - 230, y: window.frame.midY - height / 2, width: 460, height: height)
-        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
-            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
-            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
-        }
-        panel.setFrame(frame, display: true)
-    }
-
-    func finishTopic(_ body: [String: Any]) {
-        topicPanel?.orderOut(nil)
-        topicPanel = nil
-        topicWeb = nil
-        if body["discard"] as? Bool ?? false { web.evaluateJavaScript("discardSession()"); return }
-        guard let topic = body["topic"] as? String,
-              let data = try? JSONSerialization.data(withJSONObject: topic, options: .fragmentsAllowed),
-              let json = String(data: data, encoding: .utf8) else { return }
-        web.evaluateJavaScript("saveSession(\(json))")
-        window.makeKeyAndOrderFront(nil)
-    }
-
     // Updates: ask GitHub for the latest release and compare it with this build's version.
     // Nothing is downloaded or installed; the menu and a notification point to the release page.
     func checkForUpdate(manual: Bool = false) {
@@ -382,7 +467,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             return
         }
         updateURL = page
-        if updateItem == nil, let menu = statusItem.menu {
+        if updateItem == nil {
+            let menu = rightMenu
             let item = NSMenuItem(title: "", action: #selector(openUpdate), keyEquivalent: "")
             item.target = self
             menu.insertItem(item, at: 0)
@@ -407,164 +493,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return false
     }
 
-    // Resize around the window's top centre, kept on screen.
-    func resize(_ w: CGFloat, _ h: CGFloat) {
-        var frame = window.frame
-        let top = frame.maxY, centre = frame.midX
-        frame.size = NSSize(width: w, height: h)
-        frame.origin = NSPoint(x: centre - w / 2, y: top - h)
-        if let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
-            frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - w)
-            frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - h)
-        }
-        window.setFrame(frame, display: true, animate: false)
-    }
-
-    func buildStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "radio", accessibilityDescription: "Focus MN")
-        statusItem.button?.imagePosition = .imageLeft
-        statusItem.button?.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
-        let menu = NSMenu()
-        menu.autoenablesItems = false
-        startItem = NSMenuItem(title: "Start", action: #selector(startPause), keyEquivalent: "")
-        stopItem = NSMenuItem(title: "Stop", action: #selector(stopTimer), keyEquivalent: "")
-        stopItem.isEnabled = false
-        menu.addItem(startItem)
-        menu.addItem(stopItem)
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Show or Hide Radio", action: #selector(toggleWindow), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Open Logs", action: #selector(openLogs), keyEquivalent: ""))
-        menu.addItem(.separator())
-        radioItem = NSMenuItem(title: "Radio On", action: #selector(toggleRadio), keyEquivalent: "")
-        radioItem.target = self
-        stationMenu.autoenablesItems = false
-        stationMenu.addItem(radioItem)
-        stationMenu.addItem(.separator())
-        let stationItem = NSMenuItem(title: "Station", action: nil, keyEquivalent: "")
-        stationItem.submenu = stationMenu
-        menu.addItem(stationItem)
-        let timer = NSMenu()
-        for (title, value) in [("Timer (counts up)", 0), ("Pomodoro 20 min", 20), ("Pomodoro 40 min", 40), ("Pomodoro 60 min", 60)] {
-            let item = NSMenuItem(title: title, action: #selector(setTimerMode(_:)), keyEquivalent: "")
-            item.tag = value
-            item.target = self
-            timer.addItem(item)
-            timerItems.append(item)
-        }
-        let timerItem = NSMenuItem(title: "Timer", action: nil, keyEquivalent: "")
-        timerItem.submenu = timer
-        menu.addItem(timerItem)
-        let sizes = NSMenu()
-        for (title, width) in [("XXS", 150), ("XS", 240), ("Small", 340), ("Medium", 460)] {
-            let item = NSMenuItem(title: title, action: #selector(setSize(_:)), keyEquivalent: "")
-            item.tag = width
-            item.target = self
-            sizes.addItem(item)
-        }
-        let sizeItem = NSMenuItem(title: "Size", action: nil, keyEquivalent: "")
-        sizeItem.submenu = sizes
-        menu.addItem(sizeItem)
-        let skins = NSMenu()
-        for (id, title) in [("walnut", "Walnut"), ("mint", "Mint"), ("midnight", "Midnight"), ("cherry", "Cherry"),
-                            ("gameboy", "FOCUS MN Pocket"), ("gameboy-dark", "FOCUS MN Pocket Dark"),
-                            ("classic", "FOCUS MN Classic"), ("classic-dark", "FOCUS MN Classic Dark"),
-                            ("recorder", "FOCUS MN Recorder")] {
-            let item = NSMenuItem(title: title, action: #selector(setSkin(_:)), keyEquivalent: "")
-            item.representedObject = id
-            item.target = self
-            skins.addItem(item)
-            skinItems.append(item)
-        }
-        let skinItem = NSMenuItem(title: "Skin", action: nil, keyEquivalent: "")
-        skinItem.submenu = skins
-        menu.addItem(skinItem)
-        onTopItem = NSMenuItem(title: "Keep on Top", action: #selector(toggleOnTop), keyEquivalent: "")
-        onTopItem.state = .on
-        menu.addItem(onTopItem)
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesNow), keyEquivalent: ""))
-        menu.items.forEach { $0.target = self }
-        menu.addItem(NSMenuItem(title: "Quit Focus MN", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        statusItem.menu = menu
-    }
-
-    // An Edit menu so copy and paste work in the topic field.
-    func buildMainMenu() {
-        let main = NSMenu()
-        let appItem = NSMenuItem(), editItem = NSMenuItem()
-        main.addItem(appItem)
-        main.addItem(editItem)
-        let appMenu = NSMenu()
-        appMenu.addItem(NSMenuItem(title: "Quit Focus MN", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        appItem.submenu = appMenu
-        let edit = NSMenu(title: "Edit")
-        edit.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
-        edit.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
-        edit.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
-        edit.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
-        edit.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
-        editItem.submenu = edit
-        NSApp.mainMenu = main
-    }
-
-    @objc func toggleWindow() {
-        if window.isVisible { window.orderOut(nil) } else { showWindow() }
-    }
-    // The log opens in its own window; the widget stays where it is.
-    @objc func openLogs() {
-        if let window = logsWindow {
-            if let text = try? String(contentsOf: fileURL(for: "studyradio.logs"), encoding: .utf8) {
-                logsWeb?.evaluateJavaScript("window.__syncLogs && __syncLogs(\(text))")
-            }
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 880, height: 720),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = "Focus MN Log"
-        window.isReleasedWhenClosed = false
-        window.backgroundColor = NSColor(red: 0.086, green: 0.075, blue: 0.122, alpha: 1)
-        window.minSize = NSSize(width: 520, height: 480)
-        let view = WKWebView(frame: window.contentView!.bounds, configuration: pageConfig(logsWindow: true))
-        view.autoresizingMask = [.width, .height]
-        view.setValue(false, forKey: "drawsBackground")
-        window.contentView!.addSubview(view)
-        loadPage(into: view)
-        logsWeb = view
-        logsWindow = window
-        if !window.setFrameUsingName("FocusMNLogWindow") { window.center() }
-        window.setFrameAutosaveName("FocusMNLogWindow")
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
-    @objc func setSize(_ sender: NSMenuItem) {
-        showWindow()
-        web.evaluateJavaScript("setWidgetWidth(\(sender.tag))")
-    }
-    @objc func playStation(_ sender: NSMenuItem) { web.evaluateJavaScript("playStation(\(sender.tag))") }
-    @objc func toggleRadio() { web.evaluateJavaScript("setRadio(!radioOn)") }
-    @objc func startPause() { web.evaluateJavaScript("start()") }
-    @objc func stopTimer() { web.evaluateJavaScript("stop()") }
-    @objc func setTimerMode(_ sender: NSMenuItem) {
-        web.evaluateJavaScript(sender.tag == 0 ? "setMode('free')" : "setMode('pomo', \(sender.tag))")
-    }
-    @objc func setSkin(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? String else { return }
-        showWindow()
-        web.evaluateJavaScript("setSkin('\(id)')")
-    }
     @objc func openUpdate() { if let updateURL { NSWorkspace.shared.open(updateURL) } }
     @objc func checkForUpdatesNow() { checkForUpdate(manual: true) }
-    @objc func toggleOnTop() {
-        window.level = window.level == .floating ? .normal : .floating
-        onTopItem.state = window.level == .floating ? .on : .off
-    }
-    func showWindow() {
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
 }
 
 let app = NSApplication.shared

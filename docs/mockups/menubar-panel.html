@@ -1,0 +1,93 @@
+<!doctype html>
+<!-- Mockup: the menu bar panel that replaces the floating widget and the nested menus.
+     Three states: idle (light), focusing (light), short break (dark). System font, frosted panel. -->
+<meta charset="utf-8">
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  background:linear-gradient(160deg,#34463d,#1f2a24 60%,#2b2a33);min-height:100vh;padding:0 0 40px}
+.menubar{height:30px;background:rgba(30,30,30,.35);backdrop-filter:blur(20px);display:flex;justify-content:flex-end;align-items:center;gap:18px;padding:0 18px;color:#fff;font-size:13px;font-weight:600}
+.menubar .me{background:rgba(255,255,255,.22);border-radius:6px;padding:2px 8px;display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.title{color:#fff;font-size:20px;font-weight:700;margin:22px 40px 4px}
+.sub{color:rgba(255,255,255,.7);font-size:13px;margin:0 40px 18px}
+.row{display:flex;gap:28px;padding:0 40px;align-items:flex-start}
+.cap{color:rgba(255,255,255,.75);font-size:12px;text-align:center;margin-top:10px}
+
+.panel{--bg:rgba(246,245,243,.86);--card:rgba(255,255,255,.72);--ink:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--btn:#1d1d1f;--btnInk:#fff;--btn2:#fff;--accent:#e8743b;
+  width:320px;border-radius:18px;background:var(--bg);backdrop-filter:blur(30px) saturate(1.6);color:var(--ink);padding:16px;box-sizing:border-box;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.25),0 22px 50px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:12px}
+.panel.dark{--bg:rgba(36,36,38,.86);--card:rgba(255,255,255,.07);--ink:#f5f5f7;--muted:#98989d;--line:rgba(255,255,255,.1);--btn:#f5f5f7;--btnInk:#1d1d1f;--btn2:rgba(255,255,255,.1);
+  box-shadow:0 0 0 .5px rgba(255,255,255,.18),0 22px 50px rgba(0,0,0,.55)}
+.head{display:flex;justify-content:space-between;align-items:flex-start}
+.state{font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
+.state i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.time{font:800 46px/1.05 -apple-system,'SF Pro Rounded',system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.icon{width:30px;height:30px;border-radius:50%;background:var(--card);display:grid;place-items:center;color:var(--muted);box-shadow:0 0 0 .5px var(--line)}
+.prog{height:5px;border-radius:9px;background:var(--line);overflow:hidden}.prog i{display:block;height:100%;border-radius:9px;background:var(--accent)}
+.progmeta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:-6px}
+.seg{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;background:var(--line);border-radius:9px;padding:2px;font-size:12.5px;font-weight:600;text-align:center}
+.seg span{padding:5px 0;border-radius:7px;color:var(--muted)}.seg span.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.np{background:var(--card);border-radius:13px;padding:10px;display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;box-shadow:0 0 0 .5px var(--line)}
+.art{width:64px;height:64px;border-radius:9px;position:relative;overflow:hidden;background:linear-gradient(160deg,#f6b26b,#c56b8a 55%,#5b4b8a)}
+.art:before{content:"";position:absolute;left:10px;right:10px;bottom:0;height:26px;border-radius:12px 12px 0 0;background:#3b2f5c;opacity:.75}
+.art:after{content:"";position:absolute;left:24px;top:14px;width:16px;height:16px;border-radius:50%;background:#ffe2b8;box-shadow:0 0 12px #ffe2b8}
+.live{position:absolute;left:4px;top:4px;font-size:8.5px;font-weight:800;color:#fff;background:#ff3b30;border-radius:4px;padding:1px 4px;z-index:1;letter-spacing:.04em}
+.np b{font-size:13.5px;display:block}.np small{font-size:11.5px;color:var(--muted)}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:6px;color:var(--ink)}
+.ctl svg{width:15px;height:15px}.ctl .pp svg{width:19px;height:19px}
+.vol{display:flex;align-items:center;gap:6px;margin-left:auto;color:var(--muted)}.vol svg{width:12px;height:12px}
+.vol span{width:58px;height:4px;border-radius:9px;background:var(--line);position:relative}.vol span i{position:absolute;left:0;top:0;bottom:0;width:62%;border-radius:9px;background:var(--muted)}
+.msg{font-size:13.5px;color:var(--muted);text-align:center;margin:2px 0}
+.primary{background:var(--btn);color:var(--btnInk);border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px}
+.secondary{align-self:center;background:var(--btn2);border-radius:99px;padding:8px 22px;font-weight:600;font-size:13.5px;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--card);border-radius:12px;padding:9px 10px;box-shadow:0 0 0 .5px var(--line)}
+.stat small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.stat b{display:block;font-size:17px;font-weight:700;margin:2px 0 1px;font-variant-numeric:tabular-nums}
+.stat span{font-size:10.5px;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:2px 2px 0;border-top:.5px solid var(--line);padding-top:10px}
+</style>
+<body>
+<div class="menubar"><span>⌁</span><span>Wi-Fi</span><span class="me">◔ 24:13</span><span>Thu 21:40</span></div>
+<div class="title">Focus MN: menu bar panel</div>
+<div class="sub">Click the menu bar time to open. No floating widget, no skins. Light and dark follow the system.</div>
+<div class="row" id="row"></div>
+<script>
+const gear = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+const prev = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2.5 12zM21 6v12l-8.5-6z"/></svg>';
+const next = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z"/></svg>';
+const pauseI = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+const playI = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const spk = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/></svg>';
+const nowPlaying = (playing) => `<div class="np"><div class="art"><span class="live">LIVE</span></div>
+  <div><b>Lofi Girl: Study</b><small>FM 88.6 · lofi hip hop radio</small>
+  <div class="ctl"><span>${prev}</span><span class="pp">${playing ? pauseI : playI}</span><span>${next}</span><span class="vol">${spk}<span><i></i></span></span></div></div></div>`;
+const stats = `<div class="stats"><div class="stat"><small>Today</small><b>1h 20m</b><span>2 sessions</span></div>
+  <div class="stat"><small>Streak</small><b>4</b><span>days</span></div><div class="stat"><small>This week</small><b>6h 10m</b><span>9 sessions</span></div></div>`;
+const foot = `<div class="foot"><span>Open Log</span><span>Settings</span><span>Quit</span></div>`;
+const panels = [
+  ['', 'Idle: pick a mode and start', `
+    <div class="head"><div><div class="state">Ready</div><div class="time">40:00</div></div><span class="icon">${gear}</span></div>
+    <div class="seg"><span>Count up</span><span>20</span><span class="on">40</span><span>60</span></div>
+    ${nowPlaying(false)}
+    <div class="msg">Just this one thing for now.</div>
+    <div class="primary">Start Focus</div>
+    ${stats}${foot}`],
+  ['', 'Focusing, radio on', `
+    <div class="head"><div><div class="state"><i></i>Focus · Pomodoro 40</div><div class="time">24:13</div></div><span class="icon">${gear}</span></div>
+    <div class="prog"><i style="width:39%"></i></div><div class="progmeta"><span>Started 21:16</span><span>Ends 22:04</span></div>
+    ${nowPlaying(true)}
+    <div class="primary">Pause</div>
+    <div class="secondary">Stop</div>
+    ${stats}${foot}`],
+  ['dark', 'Short break, dark mode', `
+    <div class="head"><div><div class="state"><i style="background:#64d2ff"></i>Short break</div><div class="time">04:26</div></div><span class="icon">${gear}</span></div>
+    <div class="prog"><i style="width:12%;background:#64d2ff"></i></div><div class="progmeta"><span>Stand up, stretch, drink water</span><span>5 min</span></div>
+    ${nowPlaying(true)}
+    <div class="msg">Take a short break.</div>
+    <div class="primary">Pause</div>
+    <div class="secondary">Skip Break</div>
+    ${stats}${foot}`],
+];
+document.getElementById('row').innerHTML = panels.map(([cls, cap, html]) => `<div><div class="panel ${cls}">${html}</div><div class="cap">${cap}</div></div>`).join('');
+</script>
+</body>
