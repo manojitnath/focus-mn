@@ -8,7 +8,7 @@ set -e
 here="${0:A:h}"
 dir="$here/build.noindex"
 out="$dir/Focus MN.app"
-version="2.4"
+version="2.5"
 
 rm -rf "$out"
 mkdir -p "$out/Contents/MacOS" "$out/Contents/Resources"
@@ -30,6 +30,7 @@ cat > "$out/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$version</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
+  <key>NSUserNotificationAlertStyle</key><string>alert</string>
   <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
