@@ -45,7 +45,7 @@ A focus timer and lofi radio that lives in your Mac's menu bar. Click the time i
    xattr -cr "/Applications/Focus MN.app"
    ```
 
-Focus MN has no Dock icon: look for the timer icon in the menu bar. Right-click it for a small menu (Open Log, Settings, Check for Updates, Quit).
+Focus MN has no Dock icon: look for the timer icon in the menu bar. Right-click it for a small menu (Dashboard, Settings, Check for Updates, Quit).
 
 ## Updates
 

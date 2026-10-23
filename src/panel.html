@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Focus MN</title>
 <style>
-:root{--ink:#1d1d1f;--muted:#6e6e73;--card:rgba(255,255,255,.72);--line:rgba(0,0,0,.08);--btn:#1d1d1f;--btnInk:#fff;--btn2:#fff;--accent:#2f6fdb;--break:#1fa99b;--field:rgba(0,0,0,.05)}
-@media (prefers-color-scheme: dark){:root{--ink:#f5f5f7;--muted:#98989d;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.1);--btn:#f5f5f7;--btnInk:#1d1d1f;--btn2:rgba(255,255,255,.1);--accent:#4a8cff;--break:#3cc9b9;--field:rgba(255,255,255,.08)}}
+:root{--ink:#1d1d1f;--muted:#6e6e73;--card:rgba(255,255,255,.72);--line:rgba(0,0,0,.08);--btn:#1d1d1f;--btnInk:#fff;--btn2:#fff;--accent:#2f6fdb;--break:#1fa99b;--outline:rgba(0,0,0,.14);--field:rgba(0,0,0,.05)}
+@media (prefers-color-scheme: dark){:root{--ink:#f5f5f7;--muted:#98989d;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.1);--btn:#f5f5f7;--btnInk:#1d1d1f;--btn2:rgba(255,255,255,.06);--outline:rgba(255,255,255,.22);--accent:#3b7cf0;--break:#3cc9b9;--field:rgba(255,255,255,.08)}}
 *{box-sizing:border-box}
 html,body{margin:0;background:transparent;color:var(--ink);font:13px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;cursor:default}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
@@ -83,19 +83,22 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 /* status, buttons, stats */
 .msg{font-size:14px;color:var(--muted);text-align:center;margin:8px 4px 2px;min-height:19px;font-weight:500}
 .actions{display:flex;flex-direction:column;gap:12px}
-.primary{background:var(--btn);color:var(--btnInk);border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px;width:100%}
-.secondary{background:var(--btn2);border-radius:99px;padding:9px 0;font-weight:600;font-size:13.5px;text-align:center;width:100%;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
+/* Main action: the accent with white text. Second action: same size, white with a thin outline. */
+.primary{background:var(--accent);color:#fff;border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px;width:100%;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.primary:hover{filter:brightness(1.06)}
+.secondary{background:var(--btn2);border-radius:99px;padding:11px 0;font-weight:600;font-size:15px;text-align:center;width:100%;box-shadow:inset 0 0 0 1px var(--outline)}
+.secondary:hover{background:var(--field)}
 .row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px}
 /* One secondary button sits under the main one, narrower, so the main action stands out. */
-.actions .row.one{width:64%;margin:0 auto}
 .primary:active,.secondary:active{transform:scale(.985)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{background:var(--card);border-radius:12px;padding:9px 10px;box-shadow:0 0 0 .5px var(--line)}
 .stat small{display:block;font-size:11px;color:var(--muted);font-weight:600}
 .stat b{display:block;font-size:17px;font-weight:700;margin:2px 0 1px;font-variant-numeric:tabular-nums}
 .stat span{font-size:10.5px;color:var(--muted)}
-.foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:.5px solid var(--line);padding:10px 2px 0}
+.foot{display:grid;grid-template-columns:1fr auto 1fr;font-size:12px;color:var(--muted);border-top:.5px solid var(--line);padding:10px 2px 0}
 .foot button:hover{color:var(--ink)}
+.foot button:first-child{justify-self:start}.foot button:last-child{justify-self:end}
 
 /* questions (end of a block or break), shown here when the panel is open, otherwise in the Island (the black box under the notch) */
 .ask{display:flex;flex-direction:column;gap:9px;background:var(--card);border-radius:14px;padding:13px;box-shadow:0 0 0 .5px var(--line)}
@@ -154,7 +157,7 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
     <div class="stat"><small>Streak</small><b id="tStreak">0</b><span>days</span></div>
     <div class="stat"><small>This week</small><b id="tWeek">0m</b><span id="tWeekN">0 sessions</span></div>
   </div>
-  <div class="foot"><button type="button" id="openLog">Open Log</button><button type="button" id="openSettings">Settings</button><button type="button" id="quit">Quit</button></div>
+  <div class="foot"><button type="button" id="openLog">Dashboard</button><button type="button" id="openSettings">Settings</button><button type="button" id="quit">Quit</button></div>
 </div>
 
 <script>
