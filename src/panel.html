@@ -94,7 +94,7 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 .foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:.5px solid var(--line);padding:10px 2px 0}
 .foot button:hover{color:var(--ink)}
 
-/* questions (end of a block or break), shown here when the panel is open, otherwise in the top banner */
+/* questions (end of a block or break), shown here when the panel is open, otherwise in the Island (the black box under the notch) */
 .ask{display:flex;flex-direction:column;gap:9px;background:var(--card);border-radius:14px;padding:13px;box-shadow:0 0 0 .5px var(--line)}
 .ask h2{margin:0;font-size:16px;font-weight:700;text-align:center}
 .ask p{margin:-4px 0 2px;color:var(--muted);text-align:center}
@@ -173,8 +173,8 @@ const STATIONS = [
 ];
 const MIN_LOG = 60e3, DAY = 864e5, MIN = 60e3;
 // Pomodoro blocks and the break that follows each.
-const BLOCKS = [30, 60, 90], BREAK_FOR = {30: 10, 60: 15, 90: 20}, KEEP_GOING = 30;
-const breakFor = min => (BREAK_FOR[min] || 10) * MIN;
+const BLOCKS = [30, 60, 90], BREAK_FOR = {30: 5, 60: 15, 90: 20}, KEEP_GOING = 30;
+const breakFor = min => (BREAK_FOR[min] || 5) * MIN;
 const STATUS = {idle: 'Ready when you are.', running: 'Time for deep work!', paused: 'Paused. Need a break?', break: 'Take a short break.', breakPaused: 'Break paused.'};
 
 // In the app, data lives in files the app reads and writes; in a browser it uses localStorage.
@@ -312,7 +312,7 @@ const N = {
   next: () => { const m = Math.round(breakFor(S.pomoMin) / MIN); return {title: 'Logged. Nice work.', text: `Take a ${m}-minute break, or keep the momentum?`, buttons: [btn('break', 'Take break', 'primary'), btn('focus', 'Start Focus')]}; },
   breakDone: () => ({title: 'Break complete', text: 'Nice reset. Focus when you’re ready.', buttons: [btn('focus', 'Start Focus', 'primary'), btn('plus5', '+5 min')]}),
 };
-// A question shows in the panel while it's open, otherwise in the app's top banner, until it's answered.
+// A question shows in the panel while it's open, otherwise in the Island under the notch, until it's answered.
 function present(n) {
   notice = n ? Object.assign({id: ++noticeSeq}, n) : null;
   renderAsk();
@@ -329,7 +329,7 @@ function renderAsk() {
   $('#askBtns').innerHTML = notice.buttons.map(b => `<button type="button" class="${b.style}" data-id="${b.id}">${esc(b.label)}</button>`).join('');
   if (notice.input) { $('#topicList').innerHTML = [...new Set(logs.map(l => l.topic))].map(t => `<option value="${esc(t)}">`).join(''); $('#askInput').value = ''; setTimeout(() => $('#askInput').focus(), 60); }
 }
-// Answers come from the panel's buttons or, through the app, from the banner.
+// Answers come from the panel's buttons or, through the app, from the Island.
 window.noticeAction = (id, topic) => {
   switch (id) {
     case 'log': present(N.topic()); break;

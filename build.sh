@@ -8,12 +8,12 @@ set -e
 here="${0:A:h}"
 dir="$here/build.noindex"
 out="$dir/Focus MN.app"
-version="2.5"
+version="2.6"
 
 rm -rf "$out"
 mkdir -p "$out/Contents/MacOS" "$out/Contents/Resources"
 swiftc -O -swift-version 5 "$here/src/main.swift" -o "$out/Contents/MacOS/Focus MN"
-cp "$here/src/panel.html" "$here/src/dashboard.html" "$here/src/notice.html" "$here/src/AppIcon.icns" "$out/Contents/Resources/"
+cp "$here/src/panel.html" "$here/src/dashboard.html" "$here/src/island.html" "$here/src/AppIcon.icns" "$out/Contents/Resources/"
 
 cat > "$out/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

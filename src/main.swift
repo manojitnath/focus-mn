@@ -27,12 +27,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     var panelHeight: CGFloat = 520
     var lastHidden = Date.distantPast
     var hotKeyRef: EventHotKeyRef?
-    var banner: PanelWindow!
-    var bannerWeb: WKWebView!
-    var bannerHeight: CGFloat = 130
+    var island: PanelWindow!
+    var islandWeb: WKWebView!
+    var islandHeight: CGFloat = 130
     var currentNotice: [String: Any]?
     var lastNoticeId = -1
-    let bannerWidth: CGFloat = 360
+    let islandWidth: CGFloat = 360
     var activity: NSObjectProtocol?
     let panelWidth: CGFloat = 320
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         // The timer runs in the panel's page, which is hidden most of the time: keep macOS from napping the app.
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep, reason: "Focus timer")
         buildPanel()
-        buildBanner()
+        buildIsland()
         buildStatusItem()
         registerHotKey()
         // A backstop for the page's own clock: tick every second even if WebKit slows the hidden page down.
@@ -177,14 +177,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
 
     func showPanel() {
         if !panel.isVisible { placePanel() }
-        banner.orderOut(nil)
+        island.orderOut(nil)
         web.evaluateJavaScript("panelVisible(true)")
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         statusItem.button?.highlight(true)
     }
 
-    // Closing the panel hands any unanswered question to the top banner.
+    // Closing the panel hands any unanswered question to the top island.
     func hidePanel() {
         guard panel.isVisible else { return }
         panel.orderOut(nil)
@@ -193,45 +193,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         web.evaluateJavaScript("panelVisible(false)")
     }
 
-    // MARK: the top banner
+    // MARK: the Island
 
-    // A black, rounded notice at the top centre of the screen, for a finished block or break while the panel
+    // The Island: a black, rounded box hanging from the notch at the top centre of the screen, for a finished block or break while the panel
     // is closed. It stays until answered; its buttons are handled by the panel page through noticeAction().
-    func buildBanner() {
-        banner = PanelWindow(contentRect: NSRect(x: 0, y: 0, width: bannerWidth, height: bannerHeight),
+    func buildIsland() {
+        island = PanelWindow(contentRect: NSRect(x: 0, y: 0, width: islandWidth, height: islandHeight),
                              styleMask: [.borderless], backing: .buffered, defer: false)
-        banner.isOpaque = false
-        banner.backgroundColor = .clear
-        banner.hasShadow = true
-        banner.level = .popUpMenu
-        banner.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        banner.isReleasedWhenClosed = false
-        bannerWeb = WKWebView(frame: banner.contentView!.bounds, configuration: pageConfig())
-        bannerWeb.autoresizingMask = [.width, .height]
-        bannerWeb.setValue(false, forKey: "drawsBackground")
-        banner.contentView!.addSubview(bannerWeb)
-        loadPage("notice", into: bannerWeb)
+        island.isOpaque = false
+        island.backgroundColor = .clear
+        island.hasShadow = true
+        island.level = .popUpMenu
+        island.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        island.isReleasedWhenClosed = false
+        islandWeb = WKWebView(frame: island.contentView!.bounds, configuration: pageConfig())
+        islandWeb.autoresizingMask = [.width, .height]
+        islandWeb.setValue(false, forKey: "drawsBackground")
+        island.contentView!.addSubview(islandWeb)
+        loadPage("island", into: islandWeb)
     }
 
-    func placeBanner() {
+    func placeIsland() {
         guard let screen = NSScreen.main else { return }
         let f = screen.frame
-        banner.setFrame(NSRect(x: f.midX - bannerWidth / 2, y: f.maxY - bannerHeight, width: bannerWidth, height: bannerHeight), display: true)
+        island.setFrame(NSRect(x: f.midX - islandWidth / 2, y: f.maxY - islandHeight, width: islandWidth, height: islandHeight), display: true)
     }
 
     func showNotice(_ notice: [String: Any]?) {
         currentNotice = notice
-        guard let notice else { banner.orderOut(nil); return }
+        guard let notice else { island.orderOut(nil); return }
         if panel.isVisible { return }   // the panel shows it itself
-        bannerWeb.evaluateJavaScript("setNotice(\(json(notice)))")
-        placeBanner()
+        islandWeb.evaluateJavaScript("setNotice(\(json(notice)))")
+        placeIsland()
         let id = notice["id"] as? Int ?? 0
         if id != lastNoticeId { lastNoticeId = id; NSSound(named: "Glass")?.play() }
         if notice["input"] as? Bool ?? false {
             NSApp.activate(ignoringOtherApps: true)
-            banner.makeKeyAndOrderFront(nil)
+            island.makeKeyAndOrderFront(nil)
         } else {
-            banner.orderFrontRegardless()
+            island.orderFrontRegardless()
         }
     }
 
@@ -251,12 +251,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
-        if message.webView === bannerWeb {
+        if message.webView === islandWeb {
             if type == "noticeAction" {
                 web.evaluateJavaScript("noticeAction(\(json(body["id"] ?? "")), \(json(body["topic"] ?? "")))")
             } else if type == "resize", let h = body["h"] as? Double, h.isFinite, h >= 60, h <= 600 {
-                bannerHeight = CGFloat(h)
-                if banner.isVisible { placeBanner() }
+                islandHeight = CGFloat(h)
+                if island.isVisible { placeIsland() }
             }
             return
         }
@@ -502,7 +502,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
     }
 
-    // Show banners even while Focus MN is the active app.
+    // Show notification banners even while Focus MN is the active app.
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .list])
