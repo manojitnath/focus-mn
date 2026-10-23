@@ -29,10 +29,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     var hotKeyRef: EventHotKeyRef?
     var banner: PanelWindow!
     var bannerWeb: WKWebView!
-    var bannerHeight: CGFloat = 170
+    var bannerHeight: CGFloat = 130
     var currentNotice: [String: Any]?
     var lastNoticeId = -1
-    let bannerWidth: CGFloat = 460
+    let bannerWidth: CGFloat = 360
     var activity: NSObjectProtocol?
     let panelWidth: CGFloat = 320
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

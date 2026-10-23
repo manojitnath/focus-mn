@@ -41,27 +41,27 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 /* the round radio: the live video, blurred and frosted, with the controls on top */
 .disc{position:relative;width:200px;height:200px;margin:0 auto;border-radius:50%;overflow:hidden;color:#fff;
   box-shadow:0 10px 26px -8px rgba(0,0,0,.45),0 0 0 .5px rgba(0,0,0,.2)}
-.disc-bg{position:absolute;inset:0;background:#c9361f}
+.disc-bg{position:absolute;inset:0;background:#2a63c9}
 .ytbox{position:absolute;inset:0;opacity:0;transition:opacity .6s}
 .ytbox iframe{position:absolute;left:50%;top:50%;width:448px;height:252px;transform:translate(-50%,-50%);border:0;pointer-events:none}
 .playing .ytbox{opacity:1}
 /* Flat red with film grain; while the radio plays it turns see-through so the video shows under the red. */
-.disc-frost{position:absolute;inset:0;background-color:#c9361f;transition:opacity .6s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+.disc-frost{position:absolute;inset:0;background-color:#2a63c9;transition:opacity .6s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");background-blend-mode:multiply}
 .playing .disc-frost{opacity:.62}
 .disc button{position:absolute;color:#fff}
-.disc-pp{left:50%;top:20px;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,232,224,.92);color:#c9361f!important;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.disc-pp{left:50%;top:20px;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:rgba(226,236,255,.92);color:#2a63c9!important;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .disc-pp svg{width:18px;height:18px}
 .disc-mid{left:16px;right:16px;top:72px;height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .disc-mid:hover{background:rgba(255,255,255,.12)}
-.marq{width:100%;overflow:hidden;white-space:nowrap;font-size:16px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.35);text-align:center}
+.marq{width:100%;overflow:hidden;white-space:nowrap;font-size:16px;font-weight:700;color:rgba(255,255,255,.78);text-shadow:0 1px 6px rgba(0,0,0,.35);text-align:center}
 .marq span{display:inline-block}
 .marq.scroll span{padding-left:100%;animation:marq 9s linear infinite}
 @keyframes marq{to{transform:translateX(-100%)}}
-.disc-mid small{font-size:11.5px;font-weight:600;opacity:.85;letter-spacing:.04em;display:flex;align-items:center;gap:5px}
+.disc-mid small{font-size:11.5px;font-weight:600;opacity:.6;letter-spacing:.04em;display:flex;align-items:center;gap:5px}
 .disc-mid small i{width:6px;height:6px;border-radius:50%;background:#ff453a;display:none}
 .playing .disc-mid small i{display:block}
-.disc-side{top:126px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;opacity:.9}
+.disc-side{top:126px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;opacity:.75}
 .disc-side:hover{background:rgba(255,255,255,.15)}
 .disc-side svg{width:15px;height:15px}
 #prevSt{left:22px}#nextSt{right:22px}

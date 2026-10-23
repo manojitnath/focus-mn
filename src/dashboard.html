@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Focus MN</title>
 <style>
-:root{--bg:#f5f5f4;--card:#fff;--ink:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--soft:rgba(0,0,0,.04);--accent:#e8743b;--pill:#1d1d1f;--pillInk:#fff;--shadow:0 1px 2px rgba(0,0,0,.04),0 0 0 .5px rgba(0,0,0,.06)}
+:root{--bg:#f5f5f4;--card:#fff;--ink:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--soft:rgba(0,0,0,.04);--accent:#2f6fdb;--pill:#1d1d1f;--pillInk:#fff;--shadow:0 1px 2px rgba(0,0,0,.04),0 0 0 .5px rgba(0,0,0,.06)}
 @media (prefers-color-scheme: dark){:root{--bg:#1c1c1e;--card:#2c2c2e;--ink:#f5f5f7;--muted:#98989d;--line:rgba(255,255,255,.1);--soft:rgba(255,255,255,.05);--pill:#f5f5f7;--pillInk:#1d1d1f;--shadow:0 0 0 .5px rgba(255,255,255,.08)}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -224,7 +224,8 @@ document.addEventListener('click', e => { if (!e.target.closest('#menu')) closeM
 function bounds() {
   const today = dayStart(Date.now()), end = today + DAY;
   if (range === 'today') return [today, end];
-  if (range === '7d') return [today - 6 * DAY, end];
+  // 7D is this week, Monday to Sunday.
+  if (range === '7d') { const mon = today - ((new Date().getDay() + 6) % 7) * DAY; return [mon, dayStart(mon + 7.5 * DAY)]; }
   if (range === 'custom' && custom) return custom;
   return [today - (+range - 1) * DAY, end];
 }
