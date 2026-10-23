@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     var hotKeyRef: EventHotKeyRef?
     var island: PanelWindow!
     var islandWeb: WKWebView!
-    var islandHeight: CGFloat = 130
+    var islandHeight: CGFloat = 165
     var currentNotice: [String: Any]?
     var lastNoticeId = -1
     let islandWidth: CGFloat = 360
@@ -223,6 +223,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         currentNotice = notice
         guard let notice else { island.orderOut(nil); return }
         if panel.isVisible { return }   // the panel shows it itself
+        // Start the Island's text below the menu bar (and the notch, where there is one).
+        if let screen = NSScreen.main {
+            var inset = screen.frame.maxY - screen.visibleFrame.maxY
+            if #available(macOS 12.0, *) { inset = max(inset, screen.safeAreaInsets.top) }
+            islandWeb.evaluateJavaScript("setTopInset(\(Int(inset.rounded())))")
+        }
         islandWeb.evaluateJavaScript("setNotice(\(json(notice)))")
         placeIsland()
         let id = notice["id"] as? Int ?? 0
