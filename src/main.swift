@@ -27,6 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     var panelHeight: CGFloat = 520
     var lastHidden = Date.distantPast
     var hotKeyRef: EventHotKeyRef?
+    var banner: PanelWindow!
+    var bannerWeb: WKWebView!
+    var bannerHeight: CGFloat = 170
+    var currentNotice: [String: Any]?
+    var lastNoticeId = -1
+    let bannerWidth: CGFloat = 460
+    var activity: NSObjectProtocol?
     let panelWidth: CGFloat = 320
     let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     lazy var stateDir = supportDir.appendingPathComponent("Focus MN")
@@ -58,9 +65,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         try? FileManager.default.createDirectory(at: stateDir, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
         buildMainMenu()
+        // The timer runs in the panel's page, which is hidden most of the time: keep macOS from napping the app.
+        activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep, reason: "Focus timer")
         buildPanel()
+        buildBanner()
         buildStatusItem()
         registerHotKey()
+        // A backstop for the page's own clock: tick every second even if WebKit slows the hidden page down.
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.web.evaluateJavaScript("window.tick && tick()")
+        }
         // Look for a newer release now and once a day.
         checkForUpdate()
         Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.checkForUpdate() }
@@ -82,6 +96,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         let config = WKWebViewConfiguration()
         config.userContentController = content
         config.mediaTypesRequiringUserActionForPlayback = []
+        // Keep pages running while their window is hidden, so the timer and radio don't stop when the panel closes.
+        if #available(macOS 14.0, *) { config.preferences.inactiveSchedulingPolicy = .none }
         return config
     }
 
@@ -116,14 +132,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         blur.material = .popover
         blur.blendingMode = .behindWindow
         blur.state = .active
-        blur.wantsLayer = true
-        blur.layer?.cornerRadius = 14
-        blur.layer?.masksToBounds = true
+        blur.maskImage = roundedMask(14)
         panel.contentView = blur
 
         web = WKWebView(frame: blur.bounds, configuration: pageConfig())
         web.autoresizingMask = [.width, .height]
         web.setValue(false, forKey: "drawsBackground")
+        web.wantsLayer = true
+        web.layer?.cornerRadius = 14
+        web.layer?.masksToBounds = true
         blur.addSubview(web)
         loadPage("panel", into: web)
         // Off screen until first opened; the page runs from the start so the timer and radio work.
@@ -132,29 +149,90 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         panel.orderOut(nil)
     }
 
-    // Under the menu bar time, kept on screen.
-    func placePanel() {
+    // A rounded-rectangle mask that stretches to any size.
+    func roundedMask(_ r: CGFloat) -> NSImage {
+        let edge = 2 * r + 1
+        let image = NSImage(size: NSSize(width: edge, height: edge), flipped: false) { rect in
+            NSColor.black.set()
+            NSBezierPath(roundedRect: rect, xRadius: r, yRadius: r).fill()
+            return true
+        }
+        image.capInsets = NSEdgeInsets(top: r, left: r, bottom: r, right: r)
+        image.resizingMode = .stretch
+        return image
+    }
+
+    // Under the menu bar time, kept on screen. While open it stays put when its height changes,
+    // even though the menu bar item gets wider once the time shows.
+    func placePanel(recenter: Bool = true) {
         guard let button = statusItem.button, let bw = button.window else { return }
         let b = bw.convertToScreen(button.convert(button.bounds, to: nil))
-        var x = b.midX - panelWidth / 2
+        var x = recenter ? b.midX - panelWidth / 2 : panel.frame.minX
         if let visible = (bw.screen ?? NSScreen.main)?.visibleFrame {
             x = min(max(x, visible.minX + 8), visible.maxX - panelWidth - 8)
         }
-        panel.setFrame(NSRect(x: x, y: b.minY - 6 - panelHeight, width: panelWidth, height: panelHeight), display: true)
+        let top = recenter ? b.minY - 6 : panel.frame.maxY
+        panel.setFrame(NSRect(x: x, y: top - panelHeight, width: panelWidth, height: panelHeight), display: true)
     }
 
     func showPanel() {
-        placePanel()
+        if !panel.isVisible { placePanel() }
+        banner.orderOut(nil)
+        web.evaluateJavaScript("panelVisible(true)")
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         statusItem.button?.highlight(true)
     }
 
+    // Closing the panel hands any unanswered question to the top banner.
     func hidePanel() {
         guard panel.isVisible else { return }
         panel.orderOut(nil)
         lastHidden = Date()
         statusItem.button?.highlight(false)
+        web.evaluateJavaScript("panelVisible(false)")
+    }
+
+    // MARK: the top banner
+
+    // A black, rounded notice at the top centre of the screen, for a finished block or break while the panel
+    // is closed. It stays until answered; its buttons are handled by the panel page through noticeAction().
+    func buildBanner() {
+        banner = PanelWindow(contentRect: NSRect(x: 0, y: 0, width: bannerWidth, height: bannerHeight),
+                             styleMask: [.borderless], backing: .buffered, defer: false)
+        banner.isOpaque = false
+        banner.backgroundColor = .clear
+        banner.hasShadow = true
+        banner.level = .popUpMenu
+        banner.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        banner.isReleasedWhenClosed = false
+        bannerWeb = WKWebView(frame: banner.contentView!.bounds, configuration: pageConfig())
+        bannerWeb.autoresizingMask = [.width, .height]
+        bannerWeb.setValue(false, forKey: "drawsBackground")
+        banner.contentView!.addSubview(bannerWeb)
+        loadPage("notice", into: bannerWeb)
+    }
+
+    func placeBanner() {
+        guard let screen = NSScreen.main else { return }
+        let f = screen.frame
+        banner.setFrame(NSRect(x: f.midX - bannerWidth / 2, y: f.maxY - bannerHeight, width: bannerWidth, height: bannerHeight), display: true)
+    }
+
+    func showNotice(_ notice: [String: Any]?) {
+        currentNotice = notice
+        guard let notice else { banner.orderOut(nil); return }
+        if panel.isVisible { return }   // the panel shows it itself
+        bannerWeb.evaluateJavaScript("setNotice(\(json(notice)))")
+        placeBanner()
+        let id = notice["id"] as? Int ?? 0
+        if id != lastNoticeId { lastNoticeId = id; NSSound(named: "Glass")?.play() }
+        if notice["input"] as? Bool ?? false {
+            NSApp.activate(ignoringOtherApps: true)
+            banner.makeKeyAndOrderFront(nil)
+        } else {
+            banner.orderFrontRegardless()
+        }
     }
 
     // Clicking anywhere else closes the panel, like a menu.
@@ -173,6 +251,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
+        if message.webView === bannerWeb {
+            if type == "noticeAction" {
+                web.evaluateJavaScript("noticeAction(\(json(body["id"] ?? "")), \(json(body["topic"] ?? "")))")
+            } else if type == "resize", let h = body["h"] as? Double, h.isFinite, h >= 60, h <= 600 {
+                bannerHeight = CGFloat(h)
+                if banner.isVisible { placeBanner() }
+            }
+            return
+        }
         let fromDash = dashWeb != nil && message.webView === dashWeb
         switch type {
         case "store":
@@ -187,12 +274,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
         case "resize":
             if !fromDash, let h = body["h"] as? Double, h.isFinite, h >= 200, h <= 1200 {
                 panelHeight = CGFloat(h)
-                if panel.isVisible { placePanel() } else { panel.setContentSize(NSSize(width: panelWidth, height: panelHeight)) }
+                if panel.isVisible { placePanel(recenter: false) } else { panel.setContentSize(NSSize(width: panelWidth, height: panelHeight)) }
             }
         case "clock":
             // Running timer next to the menu bar icon; empty when no session is going.
             let text = body["text"] as? String ?? ""
             statusItem.button?.title = text.isEmpty ? "" : " " + text
+        case "notice":
+            if !fromDash { showNotice(body["notice"] as? [String: Any]) }
         case "showPanel":
             if !fromDash { showPanel() }
         case "hidePanel":
@@ -255,10 +344,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
             return
         }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 760),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
         window.title = "Focus MN"
+        // The title bar takes the page's colour and stays draggable.
         window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(srgbRed: 0.110, green: 0.110, blue: 0.118, alpha: 1)
+                : NSColor(srgbRed: 0.961, green: 0.961, blue: 0.957, alpha: 1)
+        }
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 640, height: 520)
         let view = WKWebView(frame: window.contentView!.bounds,
@@ -314,7 +409,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKSc
     // Click opens the panel; right-click (or Control-click) shows a small menu.
     func buildStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Focus MN")
+        statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Focus MN")?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 16, weight: .medium))
         statusItem.button?.imagePosition = .imageLeft
         statusItem.button?.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         statusItem.button?.target = self

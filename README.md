@@ -5,9 +5,9 @@ A focus timer and lofi radio that lives in your Mac's menu bar. Click the time i
 **[Download Focus MN for macOS](https://github.com/manojitnath/focus-mn/releases/latest/download/Focus-MN.zip)** (macOS 13 or later, see [Install](#install))
 
 <p>
-  <img src="docs/screenshots/panel-focus.png" width="32%" alt="The menu bar panel while focusing: time left, progress, the radio, Pause and Stop, and today's stats">
-  <img src="docs/screenshots/panel-idle.png" width="32%" alt="The panel when idle: pick Count up, 20, 40 or 60 minutes and start">
-  <img src="docs/screenshots/panel-break.png" width="32%" alt="The panel in dark mode during a short break">
+  <img src="docs/screenshots/panel-focus.png" width="32%" alt="The menu bar panel while focusing: time left, progress, the round radio player, and Pause">
+  <img src="docs/screenshots/panel-paused.png" width="32%" alt="The panel when paused: Resume, Take break and End focus">
+  <img src="docs/screenshots/panel-break.png" width="32%" alt="The panel in dark mode during a break">
 </p>
 
 <p>
@@ -17,15 +17,20 @@ A focus timer and lofi radio that lives in your Mac's menu bar. Click the time i
 ## Features
 
 - **Lives in the menu bar.** The running time sits next to a timer icon, with a filling circle (◔ ◑ ◕) for Pomodoro blocks. Click it to open the panel; click anywhere else to close it.
-- **Timer:** count up, or Pomodoro blocks of 20, 40 or 60 minutes with a 5 or 10 minute break. When a block ends you get a chime and a notification, and the panel opens to ask what the session was, then whether to take the break.
-- **Radio:** ten lofi live streams (Lofi Girl, Chillhop and others), with previous, play/pause, next and volume right in the panel. It keeps playing when the panel is closed.
-- **Study log:** every session over a minute is saved with its topic. Recent topics are one click away.
-- **Dashboard:** focus time, sessions, streak and top topic for today, 7 days, 30 days or all time; a focused-time chart; time by topic; the hours you focus best; and a full session list you can tidy up. Export to CSV, or copy today's hours.
+- **Timer:** click the big time to switch between count up and Pomodoro blocks of 30, 60 or 90 minutes (with a 10, 15 or 20 minute break). Pause to see **Resume**, **Take break** and **End focus**.
+- **When a block or break ends** with the panel closed, a banner drops down from the top of the screen with a sound and stays until you answer:
+  - *Focus complete:* **Log it** (type the topic right there, then choose a break or another block) or **Keep going** (30 more minutes, logged together).
+  - *Break complete:* **Start Focus** or **+5 min**.
+- **Fair logging:** a Pomodoro you end early isn't counted, and neither is under a minute of counting up.
+- **Radio:** ten lofi live streams (Lofi Girl, Chillhop and others) in a round player with the live video blurred behind it: play/pause, stop, previous and next, a curved volume line, and a station list when you click the name. It keeps playing when the panel is closed.
+- **Study log:** every counted session is saved with its topic. Recent topics are one click away.
+- **Dashboard:** focus time, sessions, streak and top topic for today, 7 days, 30 to 360 days or a custom date range; a focused-time chart; time by topic; the hours you focus best; and a full session list you can tidy up. Export to CSV, or copy today's hours.
 - **Shortcut:** ⌃⌥Space (Control-Option-Space) starts or pauses the timer from any app.
 - **Open at login**, light and dark mode, and an update notice when a new version is out.
 
 <p>
-  <img src="docs/screenshots/panel-ask.png" width="32%" alt="The panel asking What was this session?, with recent topics as buttons">
+  <img src="docs/screenshots/notice-done.png" width="48%" alt="The banner at the top of the screen: Focus complete, with Log it and Keep going">
+  <img src="docs/screenshots/notice-break.png" width="48%" alt="The banner: Break complete, with Start Focus and +5 min">
 </p>
 
 ## Install

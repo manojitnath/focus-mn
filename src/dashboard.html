@@ -25,6 +25,18 @@ h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
 .range{display:flex;gap:2px;background:var(--card);border-radius:99px;padding:4px;box-shadow:var(--shadow)}
 .range button{padding:6px 13px;border-radius:99px;font-weight:600}
 .range button[aria-pressed="true"]{background:var(--pill);color:var(--pillInk)}
+.range{position:relative}
+.range .more svg{width:11px;height:11px;margin-left:4px;vertical-align:-1px}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:10;min-width:190px;background:var(--card);border-radius:14px;padding:6px;box-shadow:0 0 0 .5px var(--line),0 14px 34px rgba(0,0,0,.18)}
+.menu button{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;font-weight:500}
+.menu button:hover{background:var(--soft)}
+.menu button[aria-checked="true"]::after{content:"\2713";float:right;color:var(--accent);font-weight:700}
+.menu hr{border:0;border-top:.5px solid var(--line);margin:5px 4px}
+.menu .dates{display:grid;gap:6px;padding:6px 6px 4px}
+.menu .dates label{display:grid;grid-template-columns:40px 1fr;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.menu input[type=date]{background:var(--soft);border:0;border-radius:8px;padding:5px 7px;box-shadow:inset 0 0 0 .5px var(--line)}
+.menu .apply{margin-top:2px;text-align:center;background:var(--pill);color:var(--pillInk);font-weight:600}
+.menu .apply:hover{background:var(--pill);opacity:.9}
 .round{width:36px;height:36px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center}
 .round svg{width:16px;height:16px}
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
@@ -173,18 +185,48 @@ function setTab(tab) {
   ['stats', 'sessions', 'settings'].forEach(id => $('#' + id).hidden = id !== tab);
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
-const RANGES = [['today', 'Today'], ['7d', '7D'], ['30d', '30D'], ['all', 'All']];
-let range = '7d';
-$$('[data-range]').forEach(el => {
-  el.innerHTML = RANGES.map(([k, l]) => `<button type="button" data-r="${k}">${l}</button>`).join('');
-  el.onclick = e => { const b = e.target.closest('button'); if (b) { range = b.dataset.r; renderAll(); } };
-});
+// Today and 7D are buttons; Range opens a menu of longer spans and a custom date range.
+const SPANS = [[30, '30 Days'], [90, '90 Days'], [180, '180 Days'], [360, '360 Days']];
+let range = '7d', custom = null;   // range: 'today', '7d', '30', '90', '180', '360' or 'custom'
+const rangeLabel = () => range === 'custom' && custom ? `${fmtShort(custom[0])} – ${fmtShort(custom[1] - DAY)}` : SPANS.some(([d]) => String(d) === range) ? `${range} Days` : 'Range';
+const fmtShort = ts => new Date(ts).toLocaleDateString(undefined, {day: 'numeric', month: 'short'});
+const dateValue = ts => isoDay(ts);
+function drawRanges() {
+  $$('[data-range]').forEach(el => {
+    const long = range !== 'today' && range !== '7d';
+    el.innerHTML = `<button type="button" data-r="today" aria-pressed="${range === 'today'}">Today</button><button type="button" data-r="7d" aria-pressed="${range === '7d'}">7D</button>` +
+      `<button type="button" class="more" data-r="menu" aria-pressed="${long}">${esc(rangeLabel())}<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 4.5l3 3 3-3"/></svg></button>`;
+  });
+}
+function openMenu(host) {
+  closeMenu();
+  const [a, b] = custom || [dayStart(Date.now()) - 29 * DAY, dayStart(Date.now()) + DAY];
+  host.insertAdjacentHTML('beforeend', `<div class="menu" id="menu">${SPANS.map(([d, l]) => `<button type="button" data-span="${d}" role="menuitemradio" aria-checked="${range === String(d)}">${l}</button>`).join('')}
+    <hr><button type="button" data-span="custom" aria-checked="${range === 'custom'}">Custom range\u2026</button>
+    <div class="dates" id="dates" hidden><label>From <input type="date" id="fromD" value="${dateValue(a)}"></label><label>To <input type="date" id="toD" value="${dateValue(b - DAY)}"></label><button type="button" class="apply" id="applyD">Apply</button></div></div>`);
+}
+function closeMenu() { const m = $('#menu'); if (m) m.remove(); }
+$$('[data-range]').forEach(el => el.addEventListener('click', e => {
+  e.stopPropagation();
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.r === 'menu') { $('#menu') ? closeMenu() : openMenu(el); return; }
+  if (b.dataset.r) { range = b.dataset.r; closeMenu(); renderAll(); return; }
+  if (b.dataset.span === 'custom') { $('#dates').hidden = false; return; }
+  if (b.dataset.span) { range = b.dataset.span; closeMenu(); renderAll(); return; }
+  if (b.id === 'applyD') {
+    const f = $('#fromD').valueAsDate, t = $('#toD').valueAsDate; if (!f || !t) return;
+    const day = d => +new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    const x = day(f), y = day(t);
+    custom = [Math.min(x, y), Math.max(x, y) + DAY]; range = 'custom'; closeMenu(); renderAll();
+  }
+}));
+document.addEventListener('click', e => { if (!e.target.closest('#menu')) closeMenu(); });
 function bounds() {
   const today = dayStart(Date.now()), end = today + DAY;
   if (range === 'today') return [today, end];
   if (range === '7d') return [today - 6 * DAY, end];
-  if (range === '30d') return [today - 29 * DAY, end];
-  return [logs.length ? dayStart(Math.min(...logs.map(l => l.start))) : today - 6 * DAY, end];
+  if (range === 'custom' && custom) return custom;
+  return [today - (+range - 1) * DAY, end];
 }
 function inRange() { const [a, b] = bounds(); return logs.filter(l => l.start >= a && l.start < b); }
 
@@ -205,6 +247,13 @@ function buckets(a, b) {
       out.push({s: d, e: dayStart(d + DAY * 1.5), label: span <= 7 ? dt.toLocaleDateString(undefined, {weekday: 'narrow'}) : (dt.getDate() % 5 === 1 ? String(dt.getDate()) : ''), tip: fmtDate(d)});
     }
     return {unit: 'daily', out};
+  }
+  if (span <= 200) {
+    for (let d = a; d < b; d = dayStart(d + 7.5 * DAY)) {
+      const e = Math.min(b, dayStart(d + 7.5 * DAY)), dt = new Date(d);
+      out.push({s: d, e, label: dt.getDate() <= 7 ? dt.toLocaleDateString(undefined, {month: 'short'}) : '', tip: `Week of ${fmtDate(d)}`});
+    }
+    return {unit: 'weekly', out};
   }
   for (let d = new Date(new Date(a).getFullYear(), new Date(a).getMonth(), 1); +d < b; d = new Date(d.getFullYear(), d.getMonth() + 1, 1))
     out.push({s: +d, e: +new Date(d.getFullYear(), d.getMonth() + 1, 1), label: d.toLocaleDateString(undefined, {month: 'short'}), tip: d.toLocaleDateString(undefined, {month: 'long', year: 'numeric'})});
@@ -302,7 +351,7 @@ $('#reveal').onclick = () => native({type: 'revealLogFolder'});
 $('#updates').onclick = () => native({type: 'checkUpdates'});
 
 function renderAll() {
-  $$('[data-range] button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r === range));
+  drawRanges();
   renderStats(); renderSessions(); renderSettings();
 }
 // ?demo fills the dashboard with two weeks of sample sessions, for screenshots.

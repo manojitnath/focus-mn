@@ -11,55 +11,78 @@
 html,body{margin:0;background:transparent;color:var(--ink);font:13px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-user-select:none;user-select:none;cursor:default}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
 input{font:inherit;color:inherit;-webkit-user-select:text;user-select:text}
+[hidden]{display:none!important}
 /* In a browser the panel sits on a fake desktop; in the app the window draws the frosted background. */
 body.preview{background:linear-gradient(160deg,#34463d,#1f2a24 60%,#2b2a33);min-height:100vh;padding:30px}
-body.preview .panel{background:rgba(246,245,243,.9);border-radius:16px;box-shadow:0 22px 50px rgba(0,0,0,.45);width:320px}
+body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shadow:0 22px 50px rgba(0,0,0,.45)}
 @media (prefers-color-scheme: dark){body.preview .panel{background:rgba(36,36,38,.92)}}
-.panel{width:320px;padding:16px;display:flex;flex-direction:column;gap:12px}
-[hidden]{display:none!important}
+.panel{width:320px;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
 
+/* header */
 .head{display:flex;justify-content:space-between;align-items:flex-start}
 .state{font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px}
 .state i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
-.state i.idle{background:var(--muted);opacity:.5}
-.break .state i{background:var(--break)}
-.paused .state i{animation:blink 1.2s steps(2) infinite}
+.idle .state i{background:var(--muted);opacity:.5}
+.break .state i,.breakPaused .state i{background:var(--break)}
+.paused .state i,.breakPaused .state i{animation:blink 1.2s steps(2) infinite}
 @keyframes blink{50%{opacity:.25}}
-.time{font:800 46px/1.05 -apple-system,system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.time{display:block;text-align:left;font:800 46px/1.05 -apple-system,system-ui;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px;border-radius:10px}
 .time.long{font-size:40px}
+.idle .time{cursor:pointer}
+.idle .time:hover{color:var(--accent)}
 .icon{width:30px;height:30px;border-radius:50%;background:var(--card);display:grid;place-items:center;color:var(--muted);box-shadow:0 0 0 .5px var(--line)}
 .icon:hover{color:var(--ink)}
 .icon svg{width:15px;height:15px}
 .prog{height:5px;border-radius:9px;background:var(--line);overflow:hidden}
 .prog i{display:block;height:100%;width:0;border-radius:9px;background:var(--accent);transition:width .25s linear}
-.break .prog i{background:var(--break)}
-.progmeta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:-6px}
-.seg{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;background:var(--line);border-radius:9px;padding:2px;font-size:12.5px;font-weight:600;text-align:center}
-.seg button{padding:5px 0;border-radius:7px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.break .prog i,.breakPaused .prog i{background:var(--break)}
+.progmeta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
 
-.np{background:var(--card);border-radius:13px;padding:10px;display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;box-shadow:0 0 0 .5px var(--line)}
-.art{width:64px;height:64px;border-radius:9px;position:relative;overflow:hidden;background:linear-gradient(160deg,#f6b26b,#c56b8a 55%,#5b4b8a)}
-.art .mark{position:absolute;inset:0;display:grid;place-items:center;font:800 22px -apple-system,system-ui;color:rgba(255,255,255,.9)}
-.ytbox{position:absolute;inset:0;opacity:0;transition:opacity .4s}
-.ytbox iframe{position:absolute;left:50%;top:50%;width:114px;height:64px;transform:translate(-50%,-50%);border:0;pointer-events:none}
+/* the round radio: the live video, blurred and frosted, with the controls on top */
+.disc{position:relative;width:200px;height:200px;margin:0 auto;border-radius:50%;overflow:hidden;color:#fff;
+  box-shadow:0 10px 26px -8px rgba(0,0,0,.45),0 0 0 .5px rgba(0,0,0,.2)}
+.disc-bg{position:absolute;inset:-14px;background:radial-gradient(circle at 30% 25%,#f6b26b,#d0607d 45%,#4b3f7d 85%)}
+.ytbox{position:absolute;inset:0;opacity:0;transition:opacity .6s;filter:blur(10px) saturate(1.2);transform:scale(1.12)}
+.ytbox iframe{position:absolute;left:50%;top:50%;width:448px;height:252px;transform:translate(-50%,-50%);border:0;pointer-events:none}
 .playing .ytbox{opacity:1}
-.live{position:absolute;left:4px;top:4px;font-size:8.5px;font-weight:800;color:#fff;background:#ff3b30;border-radius:4px;padding:1px 4px;z-index:2;letter-spacing:.04em;display:none}
-.playing .live{display:block}
-.np b{font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.np small{font-size:11.5px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ctl{display:flex;align-items:center;gap:10px;margin-top:6px}
-.ctl button{display:grid;place-items:center;width:22px;height:22px;border-radius:6px}
-.ctl button:hover{background:var(--line)}
-.ctl svg{width:14px;height:14px}.ctl .pp svg{width:18px;height:18px}
-.vol{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--muted)}.vol svg{width:12px;height:12px}
-.vol input{width:62px;-webkit-appearance:none;appearance:none;height:4px;border-radius:9px;background:var(--line);outline:none}
-.vol input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.3)}
+.disc-frost{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.38) 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.disc button{position:absolute;color:#fff}
+.disc-pp{left:50%;top:20px;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.88);color:#c4532e!important;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.disc-pp svg{width:18px;height:18px}
+.disc-mid{left:16px;right:16px;top:72px;height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.disc-mid:hover{background:rgba(255,255,255,.12)}
+.marq{width:100%;overflow:hidden;white-space:nowrap;font-size:16px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.35);text-align:center}
+.marq span{display:inline-block}
+.marq.scroll span{padding-left:100%;animation:marq 9s linear infinite}
+@keyframes marq{to{transform:translateX(-100%)}}
+.disc-mid small{font-size:11.5px;font-weight:600;opacity:.85;letter-spacing:.04em;display:flex;align-items:center;gap:5px}
+.disc-mid small i{width:6px;height:6px;border-radius:50%;background:#ff453a;display:none}
+.playing .disc-mid small i{display:block}
+.disc-side{top:126px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;opacity:.9}
+.disc-side:hover{background:rgba(255,255,255,.15)}
+.disc-side svg{width:15px;height:15px}
+#prevSt{left:22px}#nextSt{right:22px}
+.disc-stop{left:50%;top:132px;transform:translateX(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16)}
+.disc-stop:hover{background:rgba(255,255,255,.28)}
+.disc-stop svg{width:10px;height:10px}
+.vol{position:absolute;left:0;top:0;width:200px;height:200px;pointer-events:none}
+.vol .hit{pointer-events:stroke;cursor:pointer}
+.stations{position:absolute;left:16px;right:16px;z-index:5;background:var(--card);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border-radius:13px;padding:6px;
+  box-shadow:0 0 0 .5px var(--line),0 12px 30px rgba(0,0,0,.25);max-height:260px;overflow:auto}
+@media (prefers-color-scheme: light){.stations{background:rgba(250,250,249,.96)}}
+@media (prefers-color-scheme: dark){.stations{background:rgba(44,44,46,.97)}}
+.stations button{display:flex;justify-content:space-between;width:100%;padding:7px 10px;border-radius:8px;text-align:left}
+.stations button:hover{background:var(--line)}
+.stations button span{color:var(--muted);font-variant-numeric:tabular-nums}
+.stations button[aria-current="true"]{font-weight:700;color:var(--accent)}
 
-.msg{font-size:13.5px;color:var(--muted);text-align:center;margin:2px 4px;min-height:18px}
+/* status, buttons, stats */
+.msg{font-size:14px;color:var(--muted);text-align:center;margin:0 4px;min-height:19px;font-weight:500}
+.actions{display:flex;flex-direction:column;gap:8px}
 .primary{background:var(--btn);color:var(--btnInk);border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px;width:100%}
+.secondary{background:var(--btn2);border-radius:99px;padding:9px 0;font-weight:600;font-size:13.5px;text-align:center;width:100%;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
 .primary:active,.secondary:active{transform:scale(.985)}
-.secondary{align-self:center;background:var(--btn2);border-radius:99px;padding:8px 22px;font-weight:600;font-size:13.5px;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{background:var(--card);border-radius:12px;padding:9px 10px;box-shadow:0 0 0 .5px var(--line)}
 .stat small{display:block;font-size:11px;color:var(--muted);font-weight:600}
@@ -68,75 +91,63 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:16px;box-shado
 .foot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:.5px solid var(--line);padding:10px 2px 0}
 .foot button:hover{color:var(--ink)}
 
-/* questions at the end of a session */
-.ask{display:flex;flex-direction:column;gap:12px}
-.ask h2{margin:0;font-size:19px;font-weight:700}
-.ask p{margin:-6px 0 0;color:var(--muted)}
-.ask input[type=text]{width:100%;padding:9px 11px;border-radius:9px;border:0;background:var(--field);box-shadow:inset 0 0 0 .5px var(--line);outline:none;font-size:14px}
-.ask input[type=text]:focus{box-shadow:inset 0 0 0 .5px var(--line),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+/* questions (end of a block or break), shown here when the panel is open, otherwise in the top banner */
+.ask{display:flex;flex-direction:column;gap:9px;background:var(--card);border-radius:14px;padding:13px;box-shadow:0 0 0 .5px var(--line)}
+.ask h2{margin:0;font-size:16px;font-weight:700;text-align:center}
+.ask p{margin:-4px 0 2px;color:var(--muted);text-align:center}
+.ask input::-webkit-calendar-picker-indicator{display:none!important}
+.ask input{width:100%;padding:9px 11px;border-radius:9px;border:0;background:var(--field);box-shadow:inset 0 0 0 .5px var(--line);outline:none;font-size:14px}
+.ask input:focus{box-shadow:inset 0 0 0 .5px var(--line),0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
 .ask input.shake{animation:shake .3s}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .chips button{background:var(--card);box-shadow:0 0 0 .5px var(--line);border-radius:99px;padding:4px 10px;font-size:12px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chips button:hover{background:var(--line)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row2 .secondary{width:100%;padding:10px 0;align-self:stretch;text-align:center}
-.row2 .primary{padding:10px 0;font-size:14px}
+.ask .primary{padding:10px 0;font-size:14px}
+.ask .secondary{padding:10px 0}
 </style>
 </head>
-<body>
+<body class="idle">
 <div class="panel" id="panel">
-  <div id="main">
-    <div class="head">
-      <div><div class="state"><i id="dot" class="idle"></i><span id="state">Ready</span></div><div class="time" id="time">20:00</div></div>
-      <button class="icon" id="gear" type="button" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-    </div>
-    <div style="height:12px"></div>
-    <div id="progWrap" hidden><div class="prog"><i id="prog"></i></div><div class="progmeta" style="margin-top:6px"><span id="progA"></span><span id="progB"></span></div><div style="height:12px"></div></div>
-    <div class="seg" id="seg">
-      <button type="button" data-m="free">Count up</button><button type="button" data-m="20">20</button><button type="button" data-m="40">40</button><button type="button" data-m="60">60</button>
-    </div>
-    <div style="height:12px" id="segGap"></div>
-    <div class="np" id="np">
-      <div class="art"><span class="mark" id="mark">FM</span><div class="ytbox"><div id="ytFrame"></div></div><span class="live">LIVE</span></div>
-      <div style="min-width:0">
-        <b id="stName">Lofi Girl: Study</b><small id="stSub">FM 88.6</small>
-        <div class="ctl">
-          <button type="button" id="prevSt" title="Previous station"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2.5 12zM21 6v12l-8.5-6z"/></svg></button>
-          <button type="button" class="pp" id="radioBtn" title="Play or pause the radio"></button>
-          <button type="button" id="nextSt" title="Next station"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z"/></svg></button>
-          <span class="vol"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/></svg><input type="range" id="vol" min="0" max="100" aria-label="Volume"></span>
-        </div>
-      </div>
-    </div>
-    <div style="height:12px"></div>
-    <div class="msg" id="msg"></div>
-    <div style="height:10px"></div>
-    <button class="primary" id="primary" type="button">Start Focus</button>
-    <div style="display:flex;justify-content:center;margin-top:10px" id="secWrap"><button class="secondary" id="secondary" type="button">Stop</button></div>
-    <div style="height:12px"></div>
-    <div class="stats">
-      <div class="stat"><small>Today</small><b id="tToday">0m</b><span id="tTodayN">0 sessions</span></div>
-      <div class="stat"><small>Streak</small><b id="tStreak">0</b><span>days</span></div>
-      <div class="stat"><small>This week</small><b id="tWeek">0m</b><span id="tWeekN">0 sessions</span></div>
-    </div>
+  <div class="head">
+    <div><div class="state"><i></i><span id="state">Pomodoro</span></div>
+      <button class="time" id="time" type="button" title="Click to switch: Count up, 30, 60 or 90 minutes">30:00</button></div>
+    <button class="icon" id="gear" type="button" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
+  <div id="progWrap"><div class="prog"><i id="prog"></i></div><div class="progmeta"><span id="progA"></span><span id="progB"></span></div></div>
 
-  <form class="ask" id="topicAsk" hidden autocomplete="off">
-    <h2>What was this session?</h2>
-    <p id="sessLine"></p>
-    <input type="text" id="topicInput" list="topicList" maxlength="80" placeholder="e.g. AWS AI Practitioner, Domain 2">
+  <div class="disc" id="disc">
+    <div class="disc-bg"></div>
+    <div class="ytbox"><div id="ytFrame"></div></div>
+    <div class="disc-frost"></div>
+    <button class="disc-pp" id="radioBtn" type="button" title="Play or pause the radio"></button>
+    <button class="disc-mid" id="stationBtn" type="button" title="Choose a station"><div class="marq" id="marq"><span id="stName">Lofi Girl: Study</span></div><small><i></i><span id="stSub">FM 88.6</span></small></button>
+    <button class="disc-side" id="prevSt" type="button" title="Previous station"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2.5 12zM21 6v12l-8.5-6z"/></svg></button>
+    <button class="disc-side" id="nextSt" type="button" title="Next station"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6zM3 6v12l8.5-6z"/></svg></button>
+    <button class="disc-stop" id="stopRadio" type="button" title="Stop the radio"><svg viewBox="0 0 10 10"><rect width="10" height="10" rx="2" fill="currentColor"/></svg></button>
+    <svg class="vol" id="vol" viewBox="0 0 200 200" aria-label="Volume">
+      <path id="volTrack" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.4" stroke-linecap="round"/>
+      <path id="volFill" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      <line id="volKnob" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+      <path id="volHit" class="hit" fill="none" stroke="transparent" stroke-width="22"/>
+    </svg>
+  </div>
+  <div class="stations" id="stations" hidden role="menu"></div>
+
+  <div class="msg" id="msg"></div>
+  <div class="actions" id="actions"></div>
+  <div class="ask" id="ask" hidden>
+    <h2 id="askTitle"></h2><p id="askText"></p>
+    <input type="text" id="askInput" list="topicList" maxlength="80" placeholder="What did you work on?" hidden autocomplete="off">
     <datalist id="topicList"></datalist>
-    <div class="chips" id="chips"></div>
-    <div class="row2"><button class="secondary" id="discardBtn" type="button">Discard</button><button class="primary" type="submit">Save</button></div>
-  </form>
-
-  <div class="ask" id="breakAsk" hidden>
-    <h2>Take a break?</h2>
-    <p id="breakText"></p>
-    <div class="row2"><button class="secondary" id="skipBreakBtn" type="button">Skip</button><button class="primary" id="takeBreakBtn" type="button">Take break</button></div>
+    <div class="chips" id="askChips"></div>
+    <div class="row" id="askBtns"></div>
   </div>
-
+  <div class="stats">
+    <div class="stat"><small>Today</small><b id="tToday">0m</b><span id="tTodayN">0 sessions</span></div>
+    <div class="stat"><small>Streak</small><b id="tStreak">0</b><span>days</span></div>
+    <div class="stat"><small>This week</small><b id="tWeek">0m</b><span id="tWeekN">0 sessions</span></div>
+  </div>
   <div class="foot"><button type="button" id="openLog">Open Log</button><button type="button" id="openSettings">Settings</button><button type="button" id="quit">Quit</button></div>
 </div>
 
@@ -157,12 +168,11 @@ const STATIONS = [
   {name:'Steezyasfuck: Lofi',   f:102.8, ch:'steezyasfvck',  match:['lofi hip hop radio'],        yt:'uWzSqdcfPZw'},
   {name:'Bits & Hits: Gaming',  f:104.4, ch:'FantasyLofi',   match:['gaming lofi radio'],         yt:'Fo5BDohM9Fo'},
 ];
-const MESSAGES = ['Just this one thing for now.', 'Small sessions add up. Keep showing up.', 'Phone face down.',
-  'One focused hour beats three distracted ones.', 'Slow progress is still progress.', 'Read it, then explain it in your own words.',
-  'Done beats perfect.', 'Sit up, breathe, back to it.', 'Every chapter is a step toward the next role.', 'You started. That was the hard part.'];
-const MIN_LOG = 60e3, DAY = 864e5;
-const focusMs = () => (S.pomoMin || 20) * 60e3;
-const breakMs = () => ((S.pomoMin || 20) <= 20 ? 5 : 10) * 60e3;
+const MIN_LOG = 60e3, DAY = 864e5, MIN = 60e3;
+// Pomodoro blocks and the break that follows each.
+const BLOCKS = [30, 60, 90], BREAK_FOR = {30: 10, 60: 15, 90: 20}, KEEP_GOING = 30;
+const breakFor = min => (BREAK_FOR[min] || 10) * MIN;
+const STATUS = {idle: 'Ready when you are.', running: 'Time for deep work!', paused: 'Paused. Need a break?', break: 'Take a short one.', breakPaused: 'Break paused.'};
 
 // In the app, data lives in files the app reads and writes; in a browser it uses localStorage.
 const NATIVE = !!window.__NATIVE;
@@ -175,188 +185,219 @@ const store = {
 let logs = store.get('studyradio.logs', []);
 // The dashboard window sends the log back when it deletes or restores a session.
 window.__syncLogs = data => { logs = Array.isArray(data) ? data : []; renderStats(); };
-const S = Object.assign({status: 'idle', mode: 'pomo', pomoMin: 20, startedAt: 0, segStart: 0, acc: 0, breakEnds: 0, station: 0, vol: .6, lastSeen: 0},
-  store.get('studyradio.state', {}));
-let radioOn = false, pending = null, breakOffer = 0, restored = false;
-// A session that was running when the app quit resumes as paused, counting time up to the last heartbeat.
+const S = Object.assign({status: 'idle', mode: 'pomo', pomoMin: 30, startedAt: 0, segStart: 0, acc: 0, carry: 0, chained: false, blockMin: 30,
+  breakEnds: 0, breakLeft: 0, breakTotal: 0, station: 0, vol: .6, lastSeen: 0}, store.get('studyradio.state', {}));
+if (!BLOCKS.includes(S.pomoMin)) S.pomoMin = 30;
+if (!S.blockMin) S.blockMin = S.pomoMin;
+let restored = false;
+// A session that was running when the app quit comes back paused, counting time up to the last save.
 if (S.status === 'running') { S.acc += Math.max(0, (S.lastSeen || S.segStart) - S.segStart); S.status = 'paused'; restored = true; }
 if (S.status === 'break' && Date.now() >= S.breakEnds) S.status = 'idle';
 function saveState() { S.lastSeen = Date.now(); store.set('studyradio.state', S); }
 function saveLogs() { store.set('studyradio.logs', logs); }
-function elapsed() { return S.acc + (S.status === 'running' ? Date.now() - S.segStart : 0); }
+const elapsed = () => S.acc + (S.status === 'running' ? Date.now() - S.segStart : 0);
 
 /* ---------- formatting ---------- */
 const pad = n => String(n).padStart(2, '0');
 function clock(ms, withHours) {
-  const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  const t = Math.max(0, Math.round(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
   return withHours ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h * 60 + m)}:${pad(s)}`;
 }
-function dur(ms) { const m = Math.round(ms / 60e3), h = Math.floor(m / 60); return h ? `${h}h ${m % 60}m` : `${m}m`; }
+function dur(ms) { const m = Math.round(ms / MIN), h = Math.floor(m / 60); return h ? `${h}h ${m % 60}m` : `${m}m`; }
 const dayStart = d => { d = new Date(d); return +new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
 const fmtTime = ts => new Date(ts).toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
-/* ---------- messages ---------- */
-let msgIdx = Math.floor(Math.random() * MESSAGES.length), msgTimer = 0;
-// Notes show for a while, then the panel goes back to a rotating tip.
-function say(text, hold = 6000) { $('#msg').textContent = text; clearTimeout(msgTimer); msgTimer = setTimeout(tip, hold); }
-function tip() { clearTimeout(msgTimer); $('#msg').textContent = S.status === 'break' ? 'Stand up, stretch, drink some water.' : MESSAGES[msgIdx++ % MESSAGES.length]; msgTimer = setTimeout(tip, 15000); }
+/* ---------- status line ---------- */
+let noteTimer = 0, note = '';
+// A short note replaces the status line for a few seconds.
+function say(text, hold = 5000) { note = text; clearTimeout(noteTimer); noteTimer = setTimeout(() => { note = ''; renderMsg(); }, hold); renderMsg(); }
+function renderMsg() { $('#msg').textContent = note || STATUS[S.status]; }
 
-/* ---------- timer ---------- */
+/* ---------- focus and breaks ---------- */
+function beginFocus() {
+  present(null);
+  Object.assign(S, {status: 'running', acc: 0, carry: 0, chained: false, blockMin: S.mode === 'pomo' ? S.pomoMin : 0, startedAt: Date.now(), segStart: Date.now()});
+  saveState(); render();
+}
+function pauseFocus() { if (S.status !== 'running') return; S.acc += Date.now() - S.segStart; S.status = 'paused'; saveState(); render(); }
+function resumeFocus() { if (S.status !== 'paused') return; S.status = 'running'; S.segStart = Date.now(); saveState(); render(); }
+// Ending early: an unfinished Pomodoro isn't counted, and neither is under a minute of counting up.
+// Time spent "keeping going" after a full block is always offered for the log. then: 'break' to start a break after.
+function endFocus(then) {
+  const total = S.carry + elapsed(), st = S.startedAt, pomo = S.mode === 'pomo', chained = S.chained;
+  Object.assign(S, {status: 'idle', acc: 0, carry: 0, chained: false, segStart: 0, startedAt: 0});
+  saveState(); render();
+  if (pomo && chained) { pending = {start: st, end: Date.now(), ms: total}; afterTopic = 'next'; present(N.chainEnd()); return; }
+  if (pomo) say('Pomodoro ended early, so it wasn’t logged.');
+  else if (total < MIN_LOG) say('Under a minute, so it wasn’t logged.');
+  else { pending = {start: st, end: Date.now(), ms: total}; afterTopic = then === 'break' ? 'break' : ''; present(N.topic()); return; }
+  if (then === 'break') startBreak();
+}
+function startBreak(len) {
+  len = len || breakFor(S.mode === 'pomo' ? S.pomoMin : 0);
+  Object.assign(S, {status: 'break', breakTotal: len, breakEnds: Date.now() + len, breakLeft: 0});
+  saveState(); render();
+}
+function pauseBreak() { if (S.status !== 'break') return; S.breakLeft = Math.max(0, S.breakEnds - Date.now()); S.status = 'breakPaused'; saveState(); render(); }
+function resumeBreak() { if (S.status !== 'breakPaused') return; S.breakEnds = Date.now() + S.breakLeft; S.status = 'break'; saveState(); render(); }
+function skipBreak() { S.status = 'idle'; saveState(); render(); }
+// "Keep going" after a block: another 30 minutes, logged together with what came before.
+function keepGoing() {
+  const p = pending; pending = null; present(null);
+  Object.assign(S, {status: 'running', mode: 'pomo', carry: p ? p.ms : 0, startedAt: p ? p.start : Date.now(), chained: true, blockMin: KEEP_GOING, acc: 0, segStart: Date.now()});
+  saveState(); render();
+}
+// The menu bar shortcut and the main button: start, pause or resume whatever is going.
 function start() {
-  if (pending) return;
-  if (S.status === 'running') return pause();
-  breakOffer = 0; showView();
-  if (S.status === 'idle' || S.status === 'break') { S.acc = 0; S.startedAt = Date.now(); }
-  S.status = 'running'; S.segStart = Date.now();
-  saveState(); render(); tip();
+  if (notice) return;
+  ({idle: beginFocus, running: pauseFocus, paused: resumeFocus, break: pauseBreak, breakPaused: resumeBreak})[S.status]();
 }
-function pause() {
-  if (S.status !== 'running') return;
-  S.acc += Date.now() - S.segStart; S.status = 'paused';
+// Clicking the time cycles the timer: count up, then 30, 60 and 90 minute Pomodoros.
+function cycleMode() {
+  if (S.status !== 'idle') { say('Stop the timer to switch.', 2500); return; }
+  const order = ['free', ...BLOCKS], now = S.mode === 'pomo' ? S.pomoMin : 'free', next = order[(order.indexOf(now) + 1) % order.length];
+  if (next === 'free') S.mode = 'free'; else { S.mode = 'pomo'; S.pomoMin = next; }
   saveState(); render();
 }
-function stop() {
-  if (S.status === 'idle') return;
-  if (S.status === 'break') { S.status = 'idle'; saveState(); render(); say('Break skipped.', 3000); return; }
-  const ms = elapsed(), st = S.startedAt;
-  S.status = 'idle'; S.acc = 0; S.segStart = 0; S.startedAt = 0;
-  saveState(); render();
-  finish(st, ms);
-}
-function finish(startTs, ms) {
-  if (ms < MIN_LOG) { say('Too short to log, under a minute.', 4000); return; }
-  pending = {start: startTs, end: Date.now(), ms};
-  openTopic();
-}
-// Count up, or Pomodoro 20, 40 or 60 minutes followed by a 5 or 10 minute break.
-function setMode(m, min) {
-  if (S.status !== 'idle') { say('Stop the timer before switching mode.', 3000); return; }
-  S.mode = m;
-  if (m === 'pomo') S.pomoMin = min || S.pomoMin || 20;
-  saveState(); render();
-}
-function askBreak() {
-  if (!breakOffer || pending) return;
-  $('#breakText').textContent = `${S.pomoMin || 20} minutes of focus done. Take a ${Math.round(breakOffer / 60e3)} minute break?`;
-  showView('break');
-}
-function takeBreak() {
-  if (!breakOffer) return;
-  S.status = 'break'; S.acc = 0; S.breakEnds = Date.now() + breakOffer; breakOffer = 0;
-  saveState(); showView(); render(); tip();
-}
-function skipBreak() { breakOffer = 0; showView(); say('Break skipped. Start when you are ready.', 5000); }
+
 function tick() {
-  // A finished Pomodoro block stops the timer, opens the panel and asks what the session was, then about the break.
-  if (S.mode === 'pomo' && S.status === 'running' && elapsed() >= focusMs()) {
-    const st = S.startedAt, done = focusMs();
-    chime();
-    S.status = 'idle'; S.acc = 0; S.segStart = 0; S.startedAt = 0;
-    saveState(); render();
-    breakOffer = breakMs();
-    native({type: 'notify', title: 'Focus block done', body: `${Math.round(done / 60e3)} minutes of focus. Log it and choose your break.`, show: true});
-    finish(st, done);
+  if (S.status === 'running' && S.mode === 'pomo' && elapsed() >= S.blockMin * MIN) {
+    const total = S.carry + S.blockMin * MIN, st = S.startedAt;
+    Object.assign(S, {status: 'idle', acc: 0, carry: 0, chained: false, segStart: 0, startedAt: 0});
+    saveState(); render(); chime();
+    pending = {start: st, end: Date.now(), ms: total}; afterTopic = 'next';
+    present(N.done(total));
   }
   if (S.status === 'break' && Date.now() >= S.breakEnds) {
-    chime(); S.status = 'idle'; saveState(); render();
-    native({type: 'notify', title: 'Break over', body: 'Start when you are ready for the next session.'});
-    say('Break over. Start when you are ready.', 8000);
+    S.status = 'idle'; saveState(); render(); chime();
+    present(N.breakDone());
   }
   renderClock();
 }
-const PIE = ['○', '◔', '◑', '◕', '●'];   // empty, quarter, half, three quarters, full
+
+/* ---------- questions: finished blocks and breaks ---------- */
+let notice = null, noticeSeq = 0, pending = null, afterTopic = '', panelOpen = !NATIVE;
+const btn = (id, label, style) => ({id, label, style: style || 'secondary'});
+const N = {
+  done: total => ({title: 'Focus complete', text: `${Math.round(total / MIN)} minutes of deep work. Well done.`, buttons: [btn('log', 'Log it', 'primary'), btn('keep', 'Keep going')]}),
+  chainEnd: () => ({title: 'Focus works best in blocks', text: 'Take a break, you’ve earned it.', buttons: [btn('log', 'Log it', 'primary'), btn('keep', 'Keep going')]}),
+  topic: () => ({title: 'What did you work on?', text: sessionLine(pending), input: true, needsTopic: 'save', chips: recentTopics(4), buttons: [btn('discard', 'Discard'), btn('save', 'Save', 'primary')]}),
+  next: () => { const m = Math.round(breakFor(S.pomoMin) / MIN); return {title: 'Logged. Nice work.', text: `Take a ${m}-minute break, or keep the momentum?`, buttons: [btn('break', 'Take break', 'primary'), btn('focus', 'Start Focus')]}; },
+  breakDone: () => ({title: 'Break complete', text: 'Nice reset. Focus when you’re ready.', buttons: [btn('focus', 'Start Focus', 'primary'), btn('plus5', '+5 min')]}),
+};
+// A question shows in the panel while it's open, otherwise in the app's top banner, until it's answered.
+function present(n) {
+  notice = n ? Object.assign({id: ++noticeSeq}, n) : null;
+  renderAsk();
+  native({type: 'notice', notice});
+}
+window.panelVisible = open => { panelOpen = open; renderAsk(); if (!open && notice) native({type: 'notice', notice}); };
+function renderAsk() {
+  const show = !!notice && panelOpen;
+  $('#ask').hidden = !show; $('#actions').hidden = show;
+  if (!show) return;
+  $('#askTitle').textContent = notice.title; $('#askText').textContent = notice.text || '';
+  $('#askInput').hidden = !notice.input;
+  $('#askChips').innerHTML = notice.input ? (notice.chips || []).map(t => `<button type="button">${esc(t)}</button>`).join('') : '';
+  $('#askBtns').innerHTML = notice.buttons.map(b => `<button type="button" class="${b.style}" data-id="${b.id}">${esc(b.label)}</button>`).join('');
+  if (notice.input) { $('#topicList').innerHTML = [...new Set(logs.map(l => l.topic))].map(t => `<option value="${esc(t)}">`).join(''); $('#askInput').value = ''; setTimeout(() => $('#askInput').focus(), 60); }
+}
+// Answers come from the panel's buttons or, through the app, from the banner.
+window.noticeAction = (id, topic) => {
+  switch (id) {
+    case 'log': present(N.topic()); break;
+    case 'keep': keepGoing(); break;
+    case 'save':
+    case 'discard':
+      if (pending && id === 'save' && topic) logs.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), start: pending.start, end: pending.end, ms: pending.ms, topic});
+      if (id === 'save') { saveLogs(); renderStats(); }
+      pending = null;
+      if (afterTopic === 'next') present(N.next());
+      else { present(null); say(id === 'save' ? 'Good job!' : 'Session discarded.', 3500); if (afterTopic === 'break') startBreak(); }
+      break;
+    case 'break': present(null); startBreak(breakFor(S.pomoMin)); break;
+    case 'focus': present(null); beginFocus(); break;
+    case 'plus5': present(null); Object.assign(S, {status: 'break', breakEnds: Date.now() + 5 * MIN, breakTotal: 5 * MIN}); saveState(); render(); break;
+  }
+};
+function askPress(id) {
+  const topic = $('#askInput').value.trim();
+  if (notice && notice.needsTopic === id && !topic) { const i = $('#askInput'); i.classList.remove('shake'); void i.offsetWidth; i.classList.add('shake'); i.focus(); return; }
+  noticeAction(id, topic);
+}
+$('#askBtns').onclick = e => { const b = e.target.closest('button'); if (b) askPress(b.dataset.id); };
+$('#askChips').onclick = e => { const b = e.target.closest('button'); if (b) { $('#askInput').value = b.textContent; $('#askInput').focus(); } };
+$('#askInput').addEventListener('keydown', e => { if (e.key === 'Enter' && notice) askPress(notice.needsTopic); });
+function recentTopics(n) {
+  const seen = [];
+  for (let i = logs.length - 1; i >= 0 && seen.length < n; i--) if (!seen.includes(logs[i].topic)) seen.push(logs[i].topic);
+  return seen;
+}
+// "1h 30m of focus, 8:31 to 10:05 PM", naming paused time so the clock times add up.
+function sessionLine(p) {
+  const paused = p.end - p.start - p.ms;
+  return `${dur(p.ms)} of focus${paused >= MIN ? `, ${dur(paused)} paused` : ''}, ${fmtTime(p.start)} to ${fmtTime(p.end)}`;
+}
+
+/* ---------- drawing ---------- */
+const PIE = ['○', '◔', '◑', '◕', '●'];
 let lastMenu = null;
 function renderClock() {
-  let ms, hours = false, p = 0;
-  if (S.status === 'break') { ms = S.breakEnds - Date.now(); p = 1 - ms / breakMs(); }
-  else if (S.mode === 'pomo') { ms = focusMs() - elapsed(); p = elapsed() / focusMs(); }
+  const st = S.status, pomo = S.mode === 'pomo';
+  let ms = 0, p = 0, hours = false;
+  if (st === 'break') { ms = S.breakEnds - Date.now(); p = 1 - ms / S.breakTotal; }
+  else if (st === 'breakPaused') { ms = S.breakLeft; p = 1 - ms / S.breakTotal; }
+  else if (st === 'idle') ms = pomo ? S.pomoMin * MIN : 0;
+  else if (pomo) { ms = S.blockMin * MIN - elapsed(); p = elapsed() / (S.blockMin * MIN); }
   else { ms = elapsed(); hours = ms >= 36e5; }
   p = Math.min(1, Math.max(0, p));
   const text = clock(ms, hours);
   $('#time').textContent = text; $('#time').classList.toggle('long', text.length > 5);
   $('#prog').style.width = (p * 100).toFixed(2) + '%';
   // The menu bar shows the time, with a filling circle for Pomodoro blocks and breaks.
-  const pie = S.mode === 'pomo' || S.status === 'break' ? PIE[Math.min(4, Math.floor(p * 4 + .5))] + ' ' : '';
-  const menu = S.status === 'idle' ? '' : (S.status === 'paused' ? '⏸ ' : pie) + text;
+  const pie = pomo || st === 'break' || st === 'breakPaused' ? PIE[Math.min(4, Math.floor(p * 4 + .5))] + ' ' : '';
+  const menu = st === 'idle' ? '' : (st === 'paused' || st === 'breakPaused' ? '⏸ ' : pie) + text;
   if (menu !== lastMenu) { lastMenu = menu; native({type: 'clock', text: menu}); }
 }
 function render() {
   const st = S.status, pomo = S.mode === 'pomo';
-  document.body.className = document.body.className.replace(/\b(running|paused|break|idle)\b/g, '').trim() + ' ' + st;
-  $('#dot').className = st === 'idle' ? 'idle' : '';
-  $('#state').textContent = st === 'running' ? (pomo ? `Focus · Pomodoro ${S.pomoMin}` : 'Focus · Counting up')
-    : st === 'paused' ? 'Paused' : st === 'break' ? 'Short break' : 'Ready';
-  $('#seg').hidden = $('#segGap').hidden = st !== 'idle';
-  $('#seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === (pomo ? String(S.pomoMin) : 'free')));
-  $('#progWrap').hidden = st === 'idle' || (!pomo && st !== 'break');
-  if (st === 'break') { $('#progA').textContent = 'Break'; $('#progB').textContent = `${Math.round(breakMs() / 60e3)} min`; }
-  else if (S.startedAt) { $('#progA').textContent = `Started ${fmtTime(S.startedAt)}`; $('#progB').textContent = st === 'running' ? `Ends ${fmtTime(Date.now() + focusMs() - elapsed())}` : ''; }
-  $('#primary').textContent = st === 'running' ? 'Pause' : st === 'paused' ? 'Resume' : 'Start Focus';
-  $('#secondary').textContent = st === 'break' ? 'Skip Break' : 'Stop';
-  $('#secWrap').hidden = st === 'idle';
+  document.body.classList.remove('idle', 'running', 'paused', 'break', 'breakPaused'); document.body.classList.add(st);
+  $('#state').textContent = st === 'idle' ? (pomo ? 'Pomodoro' : 'Count up')
+    : st === 'running' ? (pomo ? (S.chained ? `Keep going · ${S.blockMin} min` : `Pomodoro · ${S.blockMin} min`) : 'Count up')
+    : st === 'paused' ? 'Paused' : st === 'break' ? 'Break' : 'Break paused';
+  if (st === 'idle') { $('#progA').textContent = 'Click the time to switch'; $('#progB').textContent = pomo ? `${S.pomoMin} min · ${BREAK_FOR[S.pomoMin]} min break` : 'No limit'; }
+  else if (st === 'break' || st === 'breakPaused') { $('#progA').textContent = 'Break'; $('#progB').textContent = `${Math.round(S.breakTotal / MIN)} min`; }
+  else { $('#progA').textContent = `Started ${fmtTime(S.startedAt)}`; $('#progB').textContent = pomo && st === 'running' ? `Ends ${fmtTime(Date.now() + S.blockMin * MIN - elapsed())}` : (S.carry ? `${dur(S.carry)} before this block` : ''); }
+  // Buttons for each state: [label, action, primary?]
+  const B = {
+    idle: [['Start Focus', beginFocus, 1], ['Take break', () => startBreak()]],
+    running: [['Pause', pauseFocus, 1]],
+    paused: [['Resume', resumeFocus, 1], ['Take break', () => endFocus('break')], ['End focus', () => endFocus()]],
+    break: [['Pause', pauseBreak, 1], ['Skip break', skipBreak]],
+    breakPaused: [['Resume', resumeBreak, 1], ['Start Focus', beginFocus]],
+  }[st];
+  const [first, ...rest] = B;
+  $('#actions').innerHTML = `<button type="button" class="primary" data-i="0">${first[0]}</button>` +
+    (rest.length ? `<div class="row">${rest.map((b, i) => `<button type="button" class="secondary" data-i="${i + 1}">${b[0]}</button>`).join('')}</div>` : '');
+  $('#actions').onclick = e => { const b = e.target.closest('button'); if (b) B[+b.dataset.i][1](); };
   native({type: 'status', status: st});
-  renderClock(); renderStats();
+  renderMsg(); renderClock(); renderStats();
 }
 
 /* ---------- today, streak and week ---------- */
 function renderStats() {
-  const today = dayStart(Date.now()), now = new Date();
-  const weekStart = today - ((now.getDay() + 6) % 7) * DAY;
+  const today = dayStart(Date.now()), now = new Date(), weekStart = today - ((now.getDay() + 6) % 7) * DAY;
   const sum = list => list.reduce((n, l) => n + l.ms, 0);
   const t = logs.filter(l => l.start >= today), w = logs.filter(l => l.start >= weekStart);
   $('#tToday').textContent = dur(sum(t)); $('#tTodayN').textContent = plural(t.length, 'session');
   $('#tWeek').textContent = dur(sum(w)); $('#tWeekN').textContent = plural(w.length, 'session');
-  $('#tStreak').textContent = streak();
-}
-// Days in a row with at least one session, counting back from today (or from yesterday if today has none yet).
-function streak() {
   const days = new Set(logs.map(l => dayStart(l.start)));
-  let d = dayStart(Date.now()); if (!days.has(d)) d -= DAY;
-  let n = 0; while (days.has(d)) { n++; d = dayStart(d - DAY / 2); }
-  return n;
+  let d = today, n = 0; if (!days.has(d)) d -= DAY;
+  while (days.has(d)) { n++; d = dayStart(d - DAY / 2); }
+  $('#tStreak').textContent = n;
 }
-
-/* ---------- end-of-session questions ---------- */
-function showView(which) {
-  $('#main').hidden = !!which;
-  $('#topicAsk').hidden = which !== 'topic';
-  $('#breakAsk').hidden = which !== 'break';
-}
-function recentTopics(n = 5) {
-  const seen = [];
-  for (let i = logs.length - 1; i >= 0 && seen.length < n; i--) if (!seen.includes(logs[i].topic)) seen.push(logs[i].topic);
-  return seen;
-}
-// "12m 30s of focus, 8:31 to 8:45 PM", naming paused time so the clock times add up.
-function sessionLine(p) {
-  const s = Math.round(p.ms / 1000), m = Math.floor(s / 60);
-  const focus = m >= 60 ? dur(p.ms) : m >= 10 || !(s % 60) ? `${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`;
-  const paused = p.end - p.start - p.ms;
-  return `${focus} of focus${paused >= 60e3 ? `, ${dur(paused)} paused` : ''}, ${fmtTime(p.start)} to ${fmtTime(p.end)}`;
-}
-function openTopic() {
-  $('#sessLine').textContent = sessionLine(pending);
-  $('#chips').innerHTML = recentTopics().map(t => `<button type="button">${esc(t)}</button>`).join('');
-  $('#topicList').innerHTML = [...new Set(logs.map(l => l.topic))].map(t => `<option value="${esc(t)}">`).join('');
-  $('#topicInput').value = '';
-  showView('topic');
-  native({type: 'showPanel'});
-  setTimeout(() => $('#topicInput').focus(), 80);
-}
-$('#chips').onclick = e => { const b = e.target.closest('button'); if (b) { $('#topicInput').value = b.textContent; $('#topicInput').focus(); } };
-$('#topicAsk').addEventListener('submit', e => {
-  e.preventDefault();
-  const input = $('#topicInput'), topic = input.value.trim();
-  if (!topic) { input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake'); input.focus(); return; }
-  logs.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), start: pending.start, end: pending.end, ms: pending.ms, topic});
-  saveLogs(); pending = null; showView(); renderStats(); say('Good job!', 5000);
-  askBreak();
-});
-$('#discardBtn').onclick = () => { pending = null; showView(); say('Session discarded.', 3000); askBreak(); };
-$('#takeBreakBtn').onclick = takeBreak;
-$('#skipBreakBtn').onclick = skipBreak;
 
 /* ---------- sounds ---------- */
 let ac;
@@ -372,10 +413,10 @@ function chime() {
   } catch (e) {}
 }
 
-/* ---------- radio (official YouTube embed, shown small as the station art) ---------- */
+/* ---------- radio (official YouTube embed, blurred behind the round player) ---------- */
 const playSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 const pauseSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-let yt = null, ytReady = null, ytPlayerReady = null;
+let radioOn = false, radioPaused = false, yt = null, ytReady = null, ytPlayerReady = null;
 const retried = {};
 const ytId = st => (S.ytIds && S.ytIds[st.name]) || st.yt;
 function loadYT() {
@@ -411,10 +452,9 @@ function unmuteYT() { if (!yt || !yt.isMuted) return; if (yt.isMuted()) yt.unMut
 async function playYT(id) {
   const player = await makePlayer();
   if (!radioOn) return;
-  if (!player) { say('YouTube did not load. Check your connection.'); return; }
+  if (!player) { say('YouTube didn’t load. Check your connection.'); return; }
   player.unMute(); player.setVolume(Math.round(S.vol * 100)); player.loadVideoById(id);
 }
-function stopYT() { if (yt && yt.stopVideo) { try { yt.stopVideo(); } catch (e) {} } document.body.classList.remove('playing'); }
 function resolveStation(i) { const st = STATIONS[i]; if (st.ch) native({type: 'resolve', i, ch: st.ch, match: st.match}); }
 function ytResolved(i, id) {
   const st = STATIONS[i]; if (!st || !id) return;
@@ -424,68 +464,99 @@ function ytResolved(i, id) {
 }
 function ytFailed() {
   const st = STATIONS[S.station];
-  if (NATIVE && st.ch && !retried[st.name]) { retried[st.name] = true; say(`Finding ${st.name}'s live stream...`, 5000); resolveStation(S.station); }
-  else say(`${st.name} is not live right now. Try another station.`);
+  if (NATIVE && st.ch && !retried[st.name]) { retried[st.name] = true; say(`Finding ${st.name}’s live stream…`); resolveStation(S.station); }
+  else say(`${st.name} isn’t live right now. Try another station.`);
+}
+function showStation() {
+  const st = STATIONS[S.station];
+  $('#stName').textContent = st.name;
+  $('#stSub').textContent = `FM ${st.f.toFixed(1)}${radioOn ? ' · LIVE' : ''}`;
+  requestAnimationFrame(() => $('#marq').classList.toggle('scroll', $('#stName').offsetWidth > $('#marq').clientWidth));
+  $('#radioBtn').innerHTML = radioOn && !radioPaused ? pauseSvg : playSvg;
 }
 function tuneTo(i) {
   S.station = (i + STATIONS.length) % STATIONS.length; saveState();
-  const st = STATIONS[S.station];
-  $('#stName').textContent = st.name;
-  $('#stSub').textContent = `FM ${st.f.toFixed(1)}`;
-  $('#mark').textContent = st.name.split(':')[0].split(' ').map(w => w[0]).join('').slice(0, 2);
-  if (radioOn) { document.body.classList.remove('playing'); playYT(ytId(st)); }
-  reportStation();
+  if (radioOn) { radioPaused = false; document.body.classList.remove('playing'); playYT(ytId(STATIONS[S.station])); }
+  showStation();
 }
-function setRadio(on) {
-  radioOn = on;
-  $('#radioBtn').innerHTML = on ? pauseSvg : playSvg;
-  if (on) tuneTo(S.station); else { stopYT(); reportStation(); }
+// Play/pause keeps the stream loaded; stop unloads it.
+function playPause() {
+  if (radioOn && !radioPaused) { radioPaused = true; if (yt && yt.pauseVideo) yt.pauseVideo(); document.body.classList.remove('playing'); }
+  else if (radioOn && radioPaused) { radioPaused = false; if (yt && yt.playVideo) yt.playVideo(); }
+  else { radioOn = true; radioPaused = false; tuneTo(S.station); }
+  showStation();
 }
-function playStation(i) { if (!radioOn) { radioOn = true; $('#radioBtn').innerHTML = pauseSvg; } tuneTo(i); }
-function reportStation() { native({type: 'station', i: S.station, on: radioOn, name: STATIONS[S.station].name}); }
-$('#radioBtn').onclick = () => setRadio(!radioOn);
+function stopRadio() { radioOn = false; radioPaused = false; if (yt && yt.stopVideo) { try { yt.stopVideo(); } catch (e) {} } document.body.classList.remove('playing'); showStation(); }
+function playStation(i) { radioOn = true; tuneTo(i); }
+$('#radioBtn').onclick = playPause;
+$('#stopRadio').onclick = stopRadio;
 $('#prevSt').onclick = () => playStation(S.station - 1);
 $('#nextSt').onclick = () => playStation(S.station + 1);
-$('#vol').value = Math.round(S.vol * 100);
-$('#vol').oninput = e => { S.vol = e.target.value / 100; if (yt && yt.setVolume) yt.setVolume(+e.target.value); saveState(); };
+$('#stationBtn').onclick = e => {
+  e.stopPropagation();
+  const list = $('#stations');
+  list.innerHTML = STATIONS.map((s, i) => `<button type="button" data-i="${i}" aria-current="${i === S.station}">${esc(s.name)}<span>${s.f.toFixed(1)}</span></button>`).join('');
+  list.style.top = ($('#disc').offsetTop + 130) + 'px';
+  list.hidden = !list.hidden;
+};
+$('#stations').onclick = e => { const b = e.target.closest('button'); if (b) { $('#stations').hidden = true; playStation(+b.dataset.i); } };
+addEventListener('click', e => { if (!e.target.closest('#stations, #stationBtn')) $('#stations').hidden = true; });
+
+// Volume: a thin arc along the bottom of the disc, from the left (silent) to the right (full).
+const CX = 100, CY = 100, R = 85, A0 = 150, A1 = 30;   // degrees, measured clockwise from the right
+const pt = a => [CX + R * Math.cos(a * Math.PI / 180), CY + R * Math.sin(a * Math.PI / 180)];
+const arc = (a, b) => { const [x0, y0] = pt(a), [x1, y1] = pt(b); return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${R} ${R} 0 0 0 ${x1.toFixed(1)} ${y1.toFixed(1)}`; };
+function drawVol() {
+  const a = A0 - (A0 - A1) * S.vol, [kx, ky] = pt(a), [ix, iy] = [CX + (R - 7) * Math.cos(a * Math.PI / 180), CY + (R - 7) * Math.sin(a * Math.PI / 180)];
+  $('#volTrack').setAttribute('d', arc(A0, A1)); $('#volHit').setAttribute('d', arc(A0, A1));
+  $('#volFill').setAttribute('d', S.vol > .005 ? arc(A0, a) : '');
+  Object.entries({x1: ix, y1: iy, x2: kx + (kx - ix) * .15, y2: ky + (ky - iy) * .15}).forEach(([k, v]) => $('#volKnob').setAttribute(k, v.toFixed(1)));
+}
+function volFrom(e) {
+  const r = $('#vol').getBoundingClientRect(), x = (e.clientX - r.left) * 200 / r.width - CX, y = (e.clientY - r.top) * 200 / r.height - CY;
+  let a = Math.atan2(y, x) * 180 / Math.PI; if (a < 0) a = y < 0 && x < 0 ? A0 : A1;
+  S.vol = Math.min(1, Math.max(0, (A0 - Math.min(A0, Math.max(A1, a))) / (A0 - A1)));
+  if (yt && yt.setVolume) yt.setVolume(Math.round(S.vol * 100));
+  drawVol();
+}
+$('#volHit').addEventListener('pointerdown', e => { e.target.setPointerCapture(e.pointerId); volFrom(e); });
+$('#volHit').addEventListener('pointermove', e => { if (e.buttons) volFrom(e); });
+$('#volHit').addEventListener('pointerup', saveState);
 
 /* ---------- controls ---------- */
-$('#primary').onclick = start;
-$('#secondary').onclick = stop;
-$('#seg').onclick = e => { const b = e.target.closest('button'); if (b) b.dataset.m === 'free' ? setMode('free') : setMode('pomo', +b.dataset.m); };
+$('#time').onclick = cycleMode;
 $('#gear').onclick = $('#openSettings').onclick = () => native({type: 'openDashboard', tab: 'settings'});
 $('#openLog').onclick = () => native({type: 'openDashboard', tab: 'stats'});
 $('#quit').onclick = () => native({type: 'quit'});
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
-  if (e.code === 'Space') { e.preventDefault(); if ($('#main').hidden) return; start(); }
+  if (e.code === 'Space') { e.preventDefault(); start(); }
   if (e.key === 'Escape') native({type: 'hidePanel'});
 });
 // The app's window follows the panel's height.
 new ResizeObserver(() => native({type: 'resize', h: Math.ceil($('#panel').getBoundingClientRect().height)})).observe($('#panel'));
 
 /* ---------- boot ---------- */
-setRadio(false);
-tuneTo(S.station);
-render();
-if (restored) say('Timer paused while the app was closed. Press Resume.', 10000); else tip();
+showStation(); drawVol(); render();
+if (restored) say('Timer paused while the app was closed. Press Resume.', 10000);
 if (NATIVE) { STATIONS.forEach((st, i) => { if (st.ch) setTimeout(() => resolveStation(i), 400 * i); }); makePlayer(); }
 setInterval(tick, 250);
 setInterval(() => { if (S.status === 'running') saveState(); }, 5000);
 addEventListener('pagehide', saveState);
-// ?demo shows a session in progress, for screenshots; ?demo=break and ?demo=ask show those states.
+// ?demo previews states for screenshots: focus (default), idle, paused, break, done, topic.
 const params = new URLSearchParams(location.search);
 if (params.has('demo')) {
-  const kind = params.get('demo');
-  S.mode = 'pomo'; S.pomoMin = 40;
-  const d0 = dayStart(Date.now()), mk = (day, h, min, topic) => ({id: day + '' + h, start: d0 - day * DAY + h * 36e5, end: d0 - day * DAY + h * 36e5 + min * 6e4, ms: min * 6e4, topic});
-  logs = [mk(0, 0.1, 40, 'Security+ notes'), mk(0, 0.05, 40, 'Linear algebra'), mk(1, 9, 60, 'AWS AI Practitioner'), mk(2, 10, 40, 'Reading'), mk(3, 11, 60, 'System design')];
-  if (kind === 'break') { S.status = 'break'; S.breakEnds = Date.now() + 4.4 * 60e3; }
-  else if (kind === 'idle') { S.status = 'idle'; }
-  else { S.status = 'running'; S.startedAt = S.segStart = Date.now() - (15 * 60 + 47) * 1000; S.acc = 0; }
-  document.body.classList.toggle('playing', kind !== 'idle'); radioOn = kind !== 'idle'; $('#radioBtn').innerHTML = radioOn ? pauseSvg : playSvg;
-  render(); tip();
-  if (kind === 'ask') { pending = {start: Date.now() - 40 * 60e3, end: Date.now(), ms: 40 * 60e3}; openTopic(); }
+  const kind = params.get('demo') || 'focus', d0 = dayStart(Date.now());
+  const mk = (day, h, min, topic) => ({id: day + '-' + h, start: d0 - day * DAY + h * 36e5, end: d0 - day * DAY + h * 36e5 + min * MIN, ms: min * MIN, topic});
+  logs = [mk(0, .1, 30, 'Security+ notes'), mk(0, .05, 60, 'Linear algebra'), mk(1, 9, 60, 'AWS AI Practitioner'), mk(2, 10, 30, 'Reading'), mk(3, 11, 90, 'System design')];
+  Object.assign(S, {mode: 'pomo', pomoMin: 60, blockMin: 60, status: 'idle'});
+  if (kind === 'focus' || kind === 'paused') Object.assign(S, {status: 'running', startedAt: Date.now() - 23 * MIN - 47e3, segStart: Date.now() - 23 * MIN - 47e3, acc: 0});
+  if (kind === 'paused') pauseFocus();
+  if (kind === 'break') Object.assign(S, {status: 'break', breakTotal: 15 * MIN, breakEnds: Date.now() + 11 * MIN + 12e3});
+  radioOn = kind !== 'idle'; document.body.classList.toggle('playing', radioOn); showStation();
+  render();
+  if (kind === 'done') { pending = {start: Date.now() - 60 * MIN, end: Date.now(), ms: 60 * MIN}; afterTopic = 'next'; present(N.done(60 * MIN)); }
+  if (kind === 'topic') { pending = {start: Date.now() - 60 * MIN, end: Date.now(), ms: 60 * MIN}; afterTopic = 'next'; present(N.topic()); }
 }
 </script>
 </body>

@@ -6,6 +6,7 @@
 |---|---|
 | `src/panel.html` | The menu bar panel: timer, radio, today's stats, and the end-of-session questions. Markup, styles and script in one file. |
 | `src/dashboard.html` | The dashboard window: Stats, Sessions and Settings tabs. |
+| `src/notice.html` | The banner at the top of the screen. It only displays what the panel sends and reports button presses back. |
 | `src/main.swift` | The native app: menu bar item, the panel window, the dashboard window, file storage, YouTube stream lookup, notifications, the global shortcut, open at login, the update check. |
 | `src/AppIcon.icns` | The app icon, made by `docs/icon/make-icns.sh` from `docs/icon/icon.html`. |
 | `build.sh` | Builds `build.noindex/Focus MN.app`. `--install` copies it to `/Applications` and opens it; `--zip` makes the release zip. |
@@ -14,19 +15,23 @@
 ## How it fits together
 
 - **The panel** is a borderless, frosted window (`NSVisualEffectView` with a `WKWebView` on top) placed under the menu bar item. It hides when it loses focus, like a menu, but is never closed, so the timer keeps running and the radio keeps playing.
+- **Keeping the hidden page alive:** WebKit suspends pages in hidden windows, which froze the timer. The app sets `inactiveSchedulingPolicy = .none`, holds a `ProcessInfo` activity against App Nap, and calls `tick()` every second as a backstop. Keep all three.
+- **Questions** (block done, break done, the topic, what next) are built by the panel page (`present()`, the `N` object). With the panel open they show in it; when it closes, the app shows the same question in the top banner (`notice` message), and the banner's answer comes back through `noticeAction(id, topic)`.
 - **Both pages** are loaded with base URL `https://localhost/`, because YouTube's player refuses file pages. The app injects `window.__NATIVE` and the saved files (`window.__STORE`) before the page's script runs; the dashboard also gets `window.__SETTINGS` and `window.__TAB`.
 - **Page to app:** `window.webkit.messageHandlers.native.postMessage({type, ...})`. Types:
   - `store`: save a key to disk. Log saves are mirrored to the other page via `__syncLogs`.
-  - `resize` (panel height), `showPanel`, `hidePanel`, `clock` (menu bar text), `notify` (`show` opens the panel).
+  - `resize` (panel or banner height), `showPanel`, `hidePanel`, `clock` (menu bar text), `notice` (show or clear the top banner), `notify`.
   - `resolve`: find a YouTube stream ID; answered with `ytResolved(i, id)`.
   - `openDashboard` (with a `tab`), `quit`, `copy`, `csv`.
   - Dashboard settings: `setLaunchAtLogin`, `chooseLogFolder`, `revealLogFolder`, `checkUpdates`; answered with `settingsChanged({...})`.
-- **App to page:** `start()` (the ⌃⌥Space shortcut), `ytResolved()`, `__syncLogs()`, `settingsChanged()`, `showTab()`.
+- **App to page:** `start()` (the ⌃⌥Space shortcut), `tick()`, `panelVisible()`, `noticeAction()`, `ytResolved()`, `__syncLogs()`, `settingsChanged()`, `showTab()`.
 
 ## Timer rules
 
-- Count up, or Pomodoro 20, 40 or 60 minutes. A finished block chimes, notifies, opens the panel and asks for the topic, then offers a 5 minute break (10 after 40 or 60 minutes).
-- Stopping early also asks for the topic. Sessions under a minute aren't logged. Breaks aren't logged.
+- Clicking the time cycles count up → Pomodoro 30 → 60 → 90. Breaks: 10, 15 and 20 minutes (`BREAK_FOR`).
+- Buttons by state: idle *Start Focus, Take break*; focusing *Pause*; paused *Resume, Take break, End focus*; break *Pause, Skip break*; break paused *Resume, Start Focus*.
+- A finished block asks *Log it / Keep going*. Log it asks the topic, then *Take break / Start Focus*. Keep going adds a 30-minute block, logged as one session with the first; ending it early asks *Log it / Keep going* again.
+- Ending a Pomodoro early isn't logged; count-up under a minute isn't logged; breaks aren't logged. A finished break asks *Start Focus / +5 min*.
 - A session running when the app quits comes back paused, counting time up to the last save.
 
 ## Stations
@@ -41,7 +46,8 @@ Each station in `STATIONS` (in `panel.html`) stores a channel, title words to ma
 ## Testing
 
 - Browser previews: `python3 -m http.server 8765 --directory src`, then:
-  - `panel.html?demo` (focusing), `?demo=idle`, `?demo=break`, `?demo=ask`
+  - `panel.html?demo` (focusing), `?demo=idle`, `?demo=paused`, `?demo=break`, `?demo=done`, `?demo=topic`
+  - `notice.html?demo=break`, `?demo=done`, `?demo=topic`
   - `dashboard.html?demo` (two weeks of sample sessions), `&tab=sessions`, `&tab=settings`
 - In a browser, data is kept in localStorage, not in your real log.
 - After `./build.sh --install`, check the real app: the panel opens from the menu bar, a session logs, the radio keeps playing with the panel closed.
