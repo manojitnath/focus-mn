@@ -41,13 +41,16 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 /* the round radio: the live video, blurred and frosted, with the controls on top */
 .disc{position:relative;width:200px;height:200px;margin:0 auto;border-radius:50%;overflow:hidden;color:#fff;
   box-shadow:0 10px 26px -8px rgba(0,0,0,.45),0 0 0 .5px rgba(0,0,0,.2)}
-.disc-bg{position:absolute;inset:-14px;background:radial-gradient(circle at 30% 25%,#f6b26b,#d0607d 45%,#4b3f7d 85%)}
-.ytbox{position:absolute;inset:0;opacity:0;transition:opacity .6s;filter:blur(10px) saturate(1.2);transform:scale(1.12)}
+.disc-bg{position:absolute;inset:0;background:#c9361f}
+.ytbox{position:absolute;inset:0;opacity:0;transition:opacity .6s}
 .ytbox iframe{position:absolute;left:50%;top:50%;width:448px;height:252px;transform:translate(-50%,-50%);border:0;pointer-events:none}
 .playing .ytbox{opacity:1}
-.disc-frost{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(0,0,0,.05),rgba(0,0,0,.38) 75%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+/* Flat red with film grain; while the radio plays it turns see-through so the video shows under the red. */
+.disc-frost{position:absolute;inset:0;background-color:#c9361f;transition:opacity .6s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");background-blend-mode:multiply}
+.playing .disc-frost{opacity:.62}
 .disc button{position:absolute;color:#fff}
-.disc-pp{left:50%;top:20px;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.88);color:#c4532e!important;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.disc-pp{left:50%;top:20px;transform:translateX(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,232,224,.92);color:#c9361f!important;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .disc-pp svg{width:18px;height:18px}
 .disc-mid{left:16px;right:16px;top:72px;height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .disc-mid:hover{background:rgba(255,255,255,.12)}
@@ -77,7 +80,7 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 .stations button[aria-current="true"]{font-weight:700;color:var(--accent)}
 
 /* status, buttons, stats */
-.msg{font-size:14px;color:var(--muted);text-align:center;margin:0 4px;min-height:19px;font-weight:500}
+.msg{font-size:14px;color:var(--muted);text-align:center;margin:8px 4px 2px;min-height:19px;font-weight:500}
 .actions{display:flex;flex-direction:column;gap:8px}
 .primary{background:var(--btn);color:var(--btnInk);border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px;width:100%}
 .secondary{background:var(--btn2);border-radius:99px;padding:9px 0;font-weight:600;font-size:13.5px;text-align:center;width:100%;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
@@ -172,7 +175,7 @@ const MIN_LOG = 60e3, DAY = 864e5, MIN = 60e3;
 // Pomodoro blocks and the break that follows each.
 const BLOCKS = [30, 60, 90], BREAK_FOR = {30: 10, 60: 15, 90: 20}, KEEP_GOING = 30;
 const breakFor = min => (BREAK_FOR[min] || 10) * MIN;
-const STATUS = {idle: 'Ready when you are.', running: 'Time for deep work!', paused: 'Paused. Need a break?', break: 'Take a short one.', breakPaused: 'Break paused.'};
+const STATUS = {idle: 'Ready when you are.', running: 'Time for deep work!', paused: 'Paused. Need a break?', break: 'Take a short break.', breakPaused: 'Break paused.'};
 
 // In the app, data lives in files the app reads and writes; in a browser it uses localStorage.
 const NATIVE = !!window.__NATIVE;
@@ -367,7 +370,7 @@ function render() {
   $('#state').textContent = st === 'idle' ? (pomo ? 'Pomodoro' : 'Count up')
     : st === 'running' ? (pomo ? (S.chained ? `Keep going · ${S.blockMin} min` : `Pomodoro · ${S.blockMin} min`) : 'Count up')
     : st === 'paused' ? 'Paused' : st === 'break' ? 'Break' : 'Break paused';
-  if (st === 'idle') { $('#progA').textContent = 'Click the time to switch'; $('#progB').textContent = pomo ? `${S.pomoMin} min · ${BREAK_FOR[S.pomoMin]} min break` : 'No limit'; }
+  if (st === 'idle') { $('#progA').textContent = ''; $('#progB').textContent = pomo ? `${S.pomoMin} min · ${BREAK_FOR[S.pomoMin]} min break` : ''; }
   else if (st === 'break' || st === 'breakPaused') { $('#progA').textContent = 'Break'; $('#progB').textContent = `${Math.round(S.breakTotal / MIN)} min`; }
   else { $('#progA').textContent = `Started ${fmtTime(S.startedAt)}`; $('#progB').textContent = pomo && st === 'running' ? `Ends ${fmtTime(Date.now() + S.blockMin * MIN - elapsed())}` : (S.carry ? `${dur(S.carry)} before this block` : ''); }
   // Buttons for each state: [label, action, primary?]

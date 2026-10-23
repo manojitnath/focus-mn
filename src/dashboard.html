@@ -240,7 +240,7 @@ function streak() {
 // Buckets for the chart: hours for one day, days up to two months, months beyond that.
 function buckets(a, b) {
   const span = Math.round((b - a) / DAY), out = [];
-  if (span <= 1) { for (let h = 0; h < 24; h++) out.push({s: a + h * 36e5, e: a + (h + 1) * 36e5, label: h % 6 === 0 ? `${h % 12 || 12}${h < 12 ? 'a' : 'p'}` : '', tip: `${pad(h)}:00`}); return {unit: 'hourly', out}; }
+  if (span <= 1) { for (let h = 0; h < 24; h++) out.push({s: a + h * 36e5, e: a + (h + 1) * 36e5, label: h % 6 === 0 ? `${h % 12 || 12}${h < 12 ? 'am' : 'pm'}` : '', tip: `${pad(h)}:00`}); return {unit: 'hourly', out}; }
   if (span <= 62) {
     for (let d = a; d < b; d = dayStart(d + DAY * 1.5)) {
       const dt = new Date(d);
