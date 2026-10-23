@@ -36,7 +36,8 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 .prog{height:5px;border-radius:9px;background:var(--line);overflow:hidden}
 .prog i{display:block;height:100%;width:0;border-radius:9px;background:var(--accent);transition:width .25s linear}
 .break .prog i,.breakPaused .prog i{background:var(--break)}
-.progmeta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+/* Always one line tall, even when empty, so nothing below moves when the text comes and goes. */
+.progmeta{display:flex;justify-content:space-between;font-size:11.5px;line-height:15px;height:15px;color:var(--muted);margin-top:6px;white-space:nowrap}
 
 /* the round radio: the live video, blurred and frosted, with the controls on top */
 .disc{position:relative;width:200px;height:200px;margin:0 auto;border-radius:50%;overflow:hidden;color:#fff;
@@ -81,10 +82,12 @@ body.preview .panel{background:rgba(246,245,243,.9);border-radius:14px;box-shado
 
 /* status, buttons, stats */
 .msg{font-size:14px;color:var(--muted);text-align:center;margin:8px 4px 2px;min-height:19px;font-weight:500}
-.actions{display:flex;flex-direction:column;gap:8px}
+.actions{display:flex;flex-direction:column;gap:12px}
 .primary{background:var(--btn);color:var(--btnInk);border-radius:99px;padding:11px 0;text-align:center;font-weight:700;font-size:15px;width:100%}
 .secondary{background:var(--btn2);border-radius:99px;padding:9px 0;font-weight:600;font-size:13.5px;text-align:center;width:100%;box-shadow:0 0 0 .5px var(--line),0 1px 2px rgba(0,0,0,.06)}
-.row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px}
+/* One secondary button sits under the main one, narrower, so the main action stands out. */
+.actions .row.one{width:64%;margin:0 auto}
 .primary:active,.secondary:active{transform:scale(.985)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{background:var(--card);border-radius:12px;padding:9px 10px;box-shadow:0 0 0 .5px var(--line)}
@@ -393,7 +396,7 @@ function render() {
     : st === 'running' ? (pomo ? (S.chained ? `Keep going · ${S.blockMin} min` : `Pomodoro · ${S.blockMin} min`) : 'Count up')
     : st === 'paused' ? 'Paused' : st === 'break' ? 'Break' : 'Break paused';
   if (st === 'idle') { $('#progA').textContent = ''; $('#progB').textContent = pomo ? `${S.pomoMin} min · ${BREAK_FOR[S.pomoMin]} min break` : ''; }
-  else if (st === 'break' || st === 'breakPaused') { $('#progA').textContent = 'Break'; $('#progB').textContent = `${Math.round(S.breakTotal / MIN)} min`; }
+  else if (st === 'break' || st === 'breakPaused') { $('#progA').textContent = ''; $('#progB').textContent = ''; }
   else { $('#progA').textContent = `Started ${fmtTime(S.startedAt)}`; $('#progB').textContent = pomo && st === 'running' ? `Ends ${fmtTime(Date.now() + S.blockMin * MIN - elapsed())}` : (S.carry ? `${dur(S.carry)} before this block` : ''); }
   // Buttons for each state: [label, action, primary?]
   const B = {
@@ -405,7 +408,7 @@ function render() {
   }[st];
   const [first, ...rest] = B;
   $('#actions').innerHTML = `<button type="button" class="primary" data-i="0">${first[0]}</button>` +
-    (rest.length ? `<div class="row">${rest.map((b, i) => `<button type="button" class="secondary" data-i="${i + 1}">${b[0]}</button>`).join('')}</div>` : '');
+    (rest.length ? `<div class="row${rest.length === 1 ? ' one' : ''}">${rest.map((b, i) => `<button type="button" class="secondary" data-i="${i + 1}">${b[0]}</button>`).join('')}</div>` : '');
   $('#actions').onclick = e => { const b = e.target.closest('button'); if (b) B[+b.dataset.i][1](); };
   native({type: 'status', status: st});
   renderMsg(); renderClock(); renderStats();
